@@ -31,6 +31,8 @@ func NewLocalRuleSet(ctx context.Context, logger logger.ContextLogger, options o
 			ctx:    ctx,
 			logger: logger,
 			tag:    options.Tag,
+			sType:  options.Type,
+			format: options.Format,
 		},
 	}
 	if options.Type == C.RuleSetTypeInline {
@@ -42,7 +44,6 @@ func NewLocalRuleSet(ctx context.Context, logger logger.ContextLogger, options o
 			return nil, err
 		}
 	} else {
-		ruleSet.format = options.Format
 		path, err := ruleSet.getPath(ctx, options.Path)
 		if err != nil {
 			return nil, err
@@ -117,6 +118,10 @@ func (s *LocalRuleSet) getPath(ctx context.Context, path string) (string, error)
 		return "", E.New("rule_set path is a directory: ", path)
 	}
 	return path, nil
+}
+
+func (s *LocalRuleSet) Update(ctx context.Context) error {
+	return nil
 }
 
 func (s *LocalRuleSet) Close() error {
