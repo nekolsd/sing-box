@@ -408,7 +408,7 @@ func (c *naiveH2Conn) WriterReplaceable() bool {
 
 func wrapHttpError(err error) error {
 	if err == nil {
-		return err
+		return nil
 	}
 	if strings.Contains(err.Error(), "client disconnected") {
 		return net.ErrClosed
