@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -77,10 +78,18 @@ func (s *HistoryStorage) Close() error {
 	return nil
 }
 
-func URLTest(ctx context.Context, link string, detour N.Dialer) (t uint16, err error) {
-	if link == "" {
-		link = "https://www.gstatic.com/generate_204"
+const DefaultURLTestLink = "https://www.gstatic.com/generate_204"
+
+func ValidateLink(link string) string {
+	linkLower := strings.ToLower(link)
+	if link == "" || (!strings.HasPrefix(linkLower, "http://") && !strings.HasPrefix(linkLower, "https://")) {
+		return DefaultURLTestLink
 	}
+	return link
+}
+
+func URLTest(ctx context.Context, link string, detour N.Dialer) (t uint16, err error) {
+	link = ValidateLink(link)
 	linkURL, err := url.Parse(link)
 	if err != nil {
 		return

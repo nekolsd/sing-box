@@ -588,28 +588,24 @@ func (s *StartedService) URLTest(ctx context.Context, request *URLTestRequest) (
 	if !isOutboundGroup {
 		return nil, status.Error(codes.InvalidArgument, "outbound is not a group: "+groupTag)
 	}
-	urlTest, isURLTest := abstractOutboundGroup.(*group.URLTest)
-	if isURLTest {
-		go urlTest.CheckOutbounds()
+	if urlTestGroup, isURLTest := abstractOutboundGroup.(*group.URLTest); isURLTest {
+		go urlTestGroup.CheckOutbounds()
+	} else if loadBalanceGroup, isLoadBalance := abstractOutboundGroup.(*group.LoadBalance); isLoadBalance {
+		go loadBalanceGroup.CheckOutbounds()
 	} else {
 		historyStorage := boxService.urlTestHistoryStorage
+		url := outboundGroup.URLTestLink()
 
-		outbounds := common.Filter(common.Map(outboundGroup.All(), func(it string) adapter.Outbound {
+		outbounds := common.FilterNotNil(common.Map(outboundGroup.All(), func(it string) adapter.Outbound {
 			itOutbound, _ := boxService.outboundManager.Outbound(it)
 			return itOutbound
-		}), func(it adapter.Outbound) bool {
-			if it == nil {
-				return false
-			}
-			_, isGroup := it.(adapter.OutboundGroup)
-			return !isGroup
-		})
+		}))
 		b, _ := batch.New(boxService.ctx, batch.WithConcurrencyNum[any](10))
 		for _, detour := range outbounds {
 			outboundToTest := detour
-			outboundTag := outboundToTest.Tag()
+			outboundTag := group.RealTag(outboundToTest)
 			b.Go(outboundTag, func() (any, error) {
-				t, err := urltest.URLTest(boxService.ctx, "", outboundToTest)
+				t, err := urltest.URLTest(boxService.ctx, url, outboundToTest)
 				if err != nil {
 					historyStorage.DeleteURLTestHistory(outboundTag)
 				} else {
