@@ -162,6 +162,7 @@ type OutboundGroup interface {
 	Outbound
 	Now() string
 	All() []string
+	URLTestLink() string
 }
 
 type URLTestGroup interface {

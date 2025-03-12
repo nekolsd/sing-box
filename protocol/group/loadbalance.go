@@ -89,7 +89,7 @@ func NewLoadBalance(ctx context.Context, router adapter.Router, logger log.Conte
 		connection:                   service.FromContext[adapter.ConnectionManager](ctx),
 		logger:                       logger,
 		tags:                         options.Outbounds,
-		link:                         options.URL,
+		link:                         urltest.ValidateLink(options.URL),
 		interval:                     time.Duration(options.Interval),
 		ttl:                          time.Duration(options.TTL),
 		idleTimeout:                  time.Duration(options.IdleTimeout),
@@ -173,6 +173,10 @@ func (s *LoadBalance) All() []string {
 		all = append(all, outbound.Tag())
 	}
 	return all
+}
+
+func (s *LoadBalance) URLTestLink() string {
+	return s.link
 }
 
 func (s *LoadBalance) URLTest(ctx context.Context) (map[string]uint16, error) {
@@ -355,9 +359,6 @@ func NewLoadBalanceGroup(ctx context.Context, outboundManager adapter.OutboundMa
 		history = clashServer.HistoryStorage()
 	} else {
 		history = urltest.NewHistoryStorage()
-	}
-	if link == "" {
-		link = "https://www.gstatic.com/generate_204"
 	}
 	loadBalanceGroup := &LoadBalanceGroup{
 		ctx:                          ctx,
