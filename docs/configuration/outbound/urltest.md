@@ -45,7 +45,7 @@ Include regular expression to filter `providers` nodes.
 
 #### url
 
-The URL to test. `https://www.gstatic.com/generate_204` will be used if empty.
+The URL to test. `https://cp.cloudflare.com/generate_204` will be used if empty.
 
 #### interval
 
