@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -15,6 +16,7 @@ import (
 	R "github.com/sagernet/sing-box/route/rule"
 	"github.com/sagernet/sing/common"
 	E "github.com/sagernet/sing/common/exceptions"
+	M "github.com/sagernet/sing/common/metadata"
 	"github.com/sagernet/sing/common/task"
 	"github.com/sagernet/sing/contrab/freelru"
 	"github.com/sagernet/sing/contrab/maphash"
@@ -48,6 +50,8 @@ type Router struct {
 	trackers          []adapter.ConnectionTracker
 	platformInterface adapter.PlatformInterface
 	started           bool
+
+	quicSniffCache sync.Map
 }
 
 func NewRouter(ctx context.Context, logFactory log.Factory, options option.RouteOptions, dnsOptions option.DNSOptions) *Router {
@@ -286,4 +290,37 @@ func (r *Router) NeighborResolver() adapter.NeighborResolver {
 func (r *Router) ResetNetwork() {
 	r.httpClientManager.ResetNetwork()
 	r.dns.ResetNetwork()
+}
+
+const quicSniffCacheTTL = 5 * time.Minute
+
+type quicSniffCacheKey struct {
+	source      M.Socksaddr
+	destination M.Socksaddr
+}
+
+type quicSniffCacheEntry struct {
+	sniffHost string
+	expiry    time.Time
+}
+
+func (r *Router) cacheQUICSniff(source, destination M.Socksaddr, sniffHost string) {
+	r.quicSniffCache.Store(quicSniffCacheKey{source, destination}, quicSniffCacheEntry{
+		sniffHost: sniffHost,
+		expiry:    time.Now().Add(quicSniffCacheTTL),
+	})
+}
+
+func (r *Router) lookupQUICSniff(source, destination M.Socksaddr) (string, bool) {
+	key := quicSniffCacheKey{source, destination}
+	v, ok := r.quicSniffCache.Load(key)
+	if !ok {
+		return "", false
+	}
+	entry := v.(quicSniffCacheEntry)
+	if time.Now().After(entry.expiry) {
+		r.quicSniffCache.Delete(key)
+		return "", false
+	}
+	return entry.sniffHost, true
 }
