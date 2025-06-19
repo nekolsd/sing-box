@@ -43,6 +43,8 @@ type Inbound struct {
 	tlsConfig        tls.ServerConfig
 	httpServer       *http.Server
 	h3Server         io.Closer
+
+	tolerateUnpadding bool
 }
 
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.NaiveInboundOptions) (adapter.Inbound, error) {
@@ -59,6 +61,8 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		networkIsDefault: options.Network == "",
 		network:          options.Network.Build(),
 		authenticator:    auth.NewAuthenticator(options.Users),
+
+		tolerateUnpadding: options.TolerateUnpadding,
 	}
 	if common.Contains(inbound.network, N.NetworkUDP) {
 		if options.TLS == nil || !options.TLS.Enabled {
@@ -147,10 +151,16 @@ func (n *Inbound) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		rejectHTTP(writer, http.StatusBadRequest)
 		n.badRequest(ctx, request, E.New("not CONNECT request"))
 		return
-	} else if request.Header.Get("Padding") == "" {
-		rejectHTTP(writer, http.StatusBadRequest)
-		n.badRequest(ctx, request, E.New("missing naive padding"))
-		return
+	}
+	if request.Header.Get("Padding") == "" {
+		err := E.New("missing naive padding")
+		if n.tolerateUnpadding {
+			n.logger.WarnContext(ctx, err)
+		} else {
+			rejectHTTP(writer, http.StatusBadRequest)
+			n.badRequest(ctx, request, err)
+			return
+		}
 	}
 	userName, password, authOk := sHttp.ParseBasicAuth(request.Header.Get("Proxy-Authorization"))
 	if authOk {

@@ -7,4 +7,6 @@ type NaiveInboundOptions struct {
 	Users   []auth.User `json:"users,omitempty"`
 	Network NetworkList `json:"network,omitempty"`
 	InboundTLSOptionsContainer
+
+	TolerateUnpadding bool `json:"tolerate_unpadding,omitempty"`
 }
