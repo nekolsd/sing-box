@@ -9,10 +9,11 @@ import (
 	"github.com/sagernet/sing-box/common/urltest"
 	"github.com/sagernet/sing-box/protocol/group"
 	"github.com/sagernet/sing/common"
-	"github.com/sagernet/sing/common/batch"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/varbin"
 	"github.com/sagernet/sing/service"
+
+	"golang.org/x/sync/errgroup"
 )
 
 func (c *CommandClient) URLTest(groupTag string) error {
@@ -64,11 +65,12 @@ func (s *CommandServer) handleURLTest(conn net.Conn) error {
 			_, isGroup := it.(adapter.OutboundGroup)
 			return !isGroup
 		})
-		b, _ := batch.New(serviceNow.ctx, batch.WithConcurrencyNum[any](10))
+		errGroup, _ := errgroup.WithContext(serviceNow.ctx)
+		errGroup.SetLimit(10)
 		for _, detour := range outbounds {
 			outboundToTest := detour
 			outboundTag := outboundToTest.Tag()
-			b.Go(outboundTag, func() (any, error) {
+			errGroup.Go(func() error {
 				t, err := urltest.URLTest(serviceNow.ctx, "", outboundToTest)
 				if err != nil {
 					historyStorage.DeleteURLTestHistory(outboundTag)
@@ -78,7 +80,7 @@ func (s *CommandServer) handleURLTest(conn net.Conn) error {
 						Delay: t,
 					})
 				}
-				return nil, nil
+				return nil
 			})
 		}
 	}
