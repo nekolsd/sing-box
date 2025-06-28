@@ -260,6 +260,9 @@ func NewDefaultRule(ctx context.Context, logger log.ContextLogger, options optio
 		rule.items = append(rule.items, item)
 		rule.allItems = append(rule.allItems, item)
 	}
+	if len(options.Limiter) > 0 {
+		rule.limiters = append(rule.limiters, options.Limiter...)
+	}
 	return rule, nil
 }
 
@@ -295,6 +298,9 @@ func NewLogicalRule(ctx context.Context, logger log.ContextLogger, options optio
 			return nil, E.Cause(err, "sub rule[", i, "]")
 		}
 		rule.rules[i] = subRule
+	}
+	if len(options.Limiter) > 0 {
+		rule.limiters = append(rule.limiters, options.Limiter...)
 	}
 	return rule, nil
 }

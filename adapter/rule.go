@@ -14,6 +14,7 @@ type Rule interface {
 	SimpleLifecycle
 	Type() string
 	Action() RuleAction
+	Limiters() []string
 }
 
 type DNSRule interface {

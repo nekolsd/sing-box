@@ -14,6 +14,7 @@ sing-box 使用 JSON 作为配置文件格式。
   "inbounds": [],
   "outbounds": [],
   "providers": [],
+  "limiters": [],
   "route": {},
   "services": [],
   "experimental": {}
@@ -32,6 +33,7 @@ sing-box 使用 JSON 作为配置文件格式。
 | `inbounds`     | [入站](./inbound/)       |
 | `outbounds`    | [出站](./outbound/)      |
 | `providers`    | [提供者](./provider/)         |
+| `limiters`     | [限速](./limiter/)       |
 | `route`        | [路由](./route/)         |
 | `services`     | [服务](./service/)       |
 | `experimental` | [实验性](./experimental/) |

@@ -24,6 +24,7 @@ import (
 	"github.com/sagernet/sing-box/experimental"
 	"github.com/sagernet/sing-box/experimental/cachefile"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
+	"github.com/sagernet/sing-box/limiter"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/protocol/direct"
@@ -415,6 +416,9 @@ func New(options Options) (*Box, error) {
 		})
 		timeService.TimeService = ntpService
 		internalServices = append(internalServices, adapter.NewLifecycleService(ntpService, "ntp service"))
+	}
+	if len(options.Limiters) > 0 {
+		router.SetLimiter(limiter.NewLimiter(ctx, logFactory.NewLogger("limiter"), options.Limiters))
 	}
 	return &Box{
 		network:         networkManager,

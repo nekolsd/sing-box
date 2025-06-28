@@ -143,7 +143,11 @@ icon: material/new-box
         "rule_set_ip_cidr_match_source": false,
         "invert": false,
         "action": "route",
-        "outbound": "direct"
+        "outbound": "direct",
+        "limiter": [
+          "limiter-a",
+          "limiter-b"
+        ]
       },
       {
         "type": "logical",
@@ -151,7 +155,11 @@ icon: material/new-box
         "rules": [],
         "invert": false,
         "action": "route",
-        "outbound": "direct"
+        "outbound": "direct",
+        "limiter": [
+          "limiter-a",
+          "limiter-b"
+        ]
       }
     ]
   }
@@ -416,6 +424,10 @@ See [Rule Actions](../rule_action/) for details.
 !!! failure "Deprecated in sing-box 1.11.0"
 
     Moved to [Rule Action](../rule_action#route).
+
+#### limiter
+
+Tags of [Limiter](/configuration/limiter). Take effect for all connections matching this rule.
 
 ### Logical Fields
 

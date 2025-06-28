@@ -140,7 +140,11 @@ icon: material/new-box
         "rule_set_ip_cidr_match_source": false,
         "invert": false,
         "action": "route",
-        "outbound": "direct"
+        "outbound": "direct",
+        "limiter": [
+          "limiter-a",
+          "limiter-b"
+        ]
       },
       {
         "type": "logical",
@@ -148,7 +152,11 @@ icon: material/new-box
         "rules": [],
         "invert": false,
         "action": "route",
-        "outbound": "direct"
+        "outbound": "direct",
+        "limiter": [
+          "limiter-a",
+          "limiter-b"
+        ]
       }
     ]
   }
@@ -413,6 +421,10 @@ Available values: `wifi`, `cellular`, `ethernet` and `other`.
 !!! failure "已在 sing-box 1.11.0 废弃"
 
     已移动到 [规则动作](../rule_action#route).
+
+#### limiter
+
+[限速](/zh/configuration/inbound) 标签。对所有匹配该规则的连接生效。
 
 ### 逻辑字段
 

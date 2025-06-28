@@ -35,6 +35,11 @@ type ConnectionTracker interface {
 	RoutedPacketConnection(ctx context.Context, conn N.PacketConn, metadata InboundContext, matchedRule Rule, matchOutbound Outbound) N.PacketConn
 }
 
+type ConnectionLimiter interface {
+	RoutedConnection(ctx context.Context, conn net.Conn, metadata InboundContext, matchedRule Rule, matchOutbound Outbound) net.Conn
+	RoutedPacketConnection(ctx context.Context, conn N.PacketConn, metadata InboundContext, matchedRule Rule, matchOutbound Outbound) N.PacketConn
+}
+
 // Deprecated: Use ConnectionRouterEx instead.
 type ConnectionRouter interface {
 	RouteConnection(ctx context.Context, conn net.Conn, metadata InboundContext) error

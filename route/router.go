@@ -37,6 +37,7 @@ type Router struct {
 	processSearcher   process.Searcher
 	pauseManager      pause.Manager
 	trackers          []adapter.ConnectionTracker
+	limiter           adapter.ConnectionLimiter
 	platformInterface platform.Interface
 	needWIFIState     bool
 	started           bool
@@ -209,6 +210,10 @@ func (r *Router) Rules() []adapter.Rule {
 
 func (r *Router) AppendTracker(tracker adapter.ConnectionTracker) {
 	r.trackers = append(r.trackers, tracker)
+}
+
+func (r *Router) SetLimiter(limiter adapter.ConnectionLimiter) {
+	r.limiter = limiter
 }
 
 func (r *Router) ResetNetwork() {

@@ -21,6 +21,7 @@ type _Options struct {
 	Providers    []Provider           `json:"providers,omitempty"`
 	Route        *RouteOptions        `json:"route,omitempty"`
 	Services     []Service            `json:"services,omitempty"`
+	Limiters     []Limiter            `json:"limiters,omitempty"`
 	Experimental *ExperimentalOptions `json:"experimental,omitempty"`
 }
 

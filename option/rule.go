@@ -103,6 +103,7 @@ type RawDefaultRule struct {
 	RuleSet                  badoption.Listable[string]        `json:"rule_set,omitempty"`
 	RuleSetIPCIDRMatchSource bool                              `json:"rule_set_ip_cidr_match_source,omitempty"`
 	Invert                   bool                              `json:"invert,omitempty"`
+	Limiter                  badoption.Listable[string]        `json:"limiter,omitempty"`
 
 	// Deprecated: renamed to rule_set_ip_cidr_match_source
 	Deprecated_RulesetIPCIDRMatchSource bool `json:"rule_set_ipcidr_match_source,omitempty"`
@@ -132,9 +133,10 @@ func (r DefaultRule) IsValid() bool {
 }
 
 type RawLogicalRule struct {
-	Mode   string `json:"mode"`
-	Rules  []Rule `json:"rules,omitempty"`
-	Invert bool   `json:"invert,omitempty"`
+	Mode    string                     `json:"mode"`
+	Rules   []Rule                     `json:"rules,omitempty"`
+	Invert  bool                       `json:"invert,omitempty"`
+	Limiter badoption.Listable[string] `json:"limiter,omitempty"`
 }
 
 type LogicalRule struct {
