@@ -40,6 +40,8 @@ import (
 	"golang.org/x/net/http2"
 )
 
+var XrayVersion = [3]byte{25, 8, 3}
+
 var _ ConfigCompat = (*RealityClientConfig)(nil)
 
 type RealityClientConfig struct {
@@ -153,9 +155,9 @@ func (e *RealityClientConfig) ClientHandshake(ctx context.Context, conn net.Conn
 	}
 	binary.BigEndian.PutUint64(hello.SessionId, uint64(nowTime.Unix()))
 
-	hello.SessionId[0] = 1
-	hello.SessionId[1] = 8
-	hello.SessionId[2] = 1
+	hello.SessionId[0] = XrayVersion[0]
+	hello.SessionId[1] = XrayVersion[1]
+	hello.SessionId[2] = XrayVersion[2]
 	binary.BigEndian.PutUint32(hello.SessionId[4:], uint32(time.Now().Unix()))
 	copy(hello.SessionId[8:], e.shortID[:])
 	if debug.Enabled {
