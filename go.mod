@@ -58,7 +58,7 @@ require (
 	howett.net/plist v1.0.1
 )
 
-//replace github.com/sagernet/sing => ../sing
+replace github.com/sagernet/sing-mux v0.3.3 => github.com/nekolsd/sing-mux v0.3.3-nekolsd
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
