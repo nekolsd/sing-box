@@ -33,6 +33,8 @@ type TunInboundOptions struct {
 	RouteExcludeAddressSet        badoption.Listable[string]       `json:"route_exclude_address_set,omitempty"`
 	IncludeInterface              badoption.Listable[string]       `json:"include_interface,omitempty"`
 	ExcludeInterface              badoption.Listable[string]       `json:"exclude_interface,omitempty"`
+	ExcludeEthernetAddress        badoption.Listable[string]       `json:"exclude_ether_address,omitempty"`
+	ExcludeICMP                   bool                             `json:"exclude_icmp,omitempty"`
 	IncludeUID                    badoption.Listable[uint32]       `json:"include_uid,omitempty"`
 	IncludeUIDRange               badoption.Listable[string]       `json:"include_uid_range,omitempty"`
 	ExcludeUID                    badoption.Listable[uint32]       `json:"exclude_uid,omitempty"`

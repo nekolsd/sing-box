@@ -132,6 +132,18 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		}
 	}
 
+	var excludeEthernetAddress []net.HardwareAddr
+	for _, macStr := range options.ExcludeEthernetAddress {
+		macAddr, err := net.ParseMAC(macStr)
+		if err != nil {
+			return nil, E.Cause(err, "parse exclude_ether_address")
+		}
+		if len(macAddr) != 6 {
+			return nil, E.New("invalid Ethernet MAC address length: ", macStr)
+		}
+		excludeEthernetAddress = append(excludeEthernetAddress, macAddr)
+	}
+
 	tableIndex := options.IPRoute2TableIndex
 	if tableIndex == 0 {
 		tableIndex = tun.DefaultIPRoute2TableIndex
@@ -188,6 +200,8 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 			StrictRoute:                           options.StrictRoute,
 			IncludeInterface:                      options.IncludeInterface,
 			ExcludeInterface:                      options.ExcludeInterface,
+			ExcludeEthernetAddress:                excludeEthernetAddress,
+			ExcludeICMP:                           options.ExcludeICMP,
 			Inet4RouteAddress:                     inet4RouteAddress,
 			Inet6RouteAddress:                     inet6RouteAddress,
 			Inet4RouteExcludeAddress:              inet4RouteExcludeAddress,
@@ -218,6 +232,12 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 			return nil, E.New("parse route_exclude_address_set: rule-set not found: ", routeExcludeAddressSet)
 		}
 		inbound.routeExcludeRuleSet = append(inbound.routeExcludeRuleSet, ruleSet)
+	}
+	if len(options.ExcludeEthernetAddress) > 0 && !options.AutoRedirect {
+		return nil, E.New("`auto_redirect` is required by `exclude_ether_address`")
+	}
+	if options.ExcludeICMP && !options.AutoRedirect {
+		return nil, E.New("`auto_redirect` is required by `exclude_icmp`")
 	}
 	if options.AutoRedirect {
 		if !options.AutoRoute {
