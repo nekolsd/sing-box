@@ -169,7 +169,11 @@ func (h *MultiInbound) newConnection(ctx context.Context, conn net.Conn, metadat
 	} else {
 		metadata.User = user
 	}
-	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
+	if mux.IsMuxDestination(metadata.Destination) {
+		h.logger.InfoContext(ctx, "[", user, "] inbound connection to multiplex session")
+	} else {
+		h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
+	}
 	metadata.Inbound = h.Tag()
 	metadata.InboundType = h.Type()
 	//nolint:staticcheck
