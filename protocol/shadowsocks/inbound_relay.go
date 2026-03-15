@@ -143,7 +143,11 @@ func (h *RelayInbound) newConnection(ctx context.Context, conn net.Conn, metadat
 	} else {
 		metadata.User = destination
 	}
-	h.logger.InfoContext(ctx, "[", destination, "] inbound connection to ", metadata.Destination)
+	if mux.IsMuxDestination(metadata.Destination) {
+		h.logger.InfoContext(ctx, "[", destination, "] inbound connection to multiplex session")
+	} else {
+		h.logger.InfoContext(ctx, "[", destination, "] inbound connection to ", metadata.Destination)
+	}
 	metadata.Inbound = h.Tag()
 	metadata.InboundType = h.Type()
 	//nolint:staticcheck

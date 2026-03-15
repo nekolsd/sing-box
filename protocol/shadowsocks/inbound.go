@@ -142,7 +142,11 @@ func (h *Inbound) NewPacket(buffer *buf.Buffer, source M.Socksaddr) {
 }
 
 func (h *Inbound) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
-	h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	if mux.IsMuxDestination(metadata.Destination) {
+		h.logger.InfoContext(ctx, "inbound connection to multiplex session")
+	} else {
+		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+	}
 	metadata.Inbound = h.Tag()
 	metadata.InboundType = h.Type()
 	return h.router.RouteConnection(ctx, conn, metadata)
