@@ -218,6 +218,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 			ExcludePackage:                        options.ExcludePackage,
 			IncludeMACAddress:                     includeMACAddress,
 			ExcludeMACAddress:                     excludeMACAddress,
+			ExcludeICMP:                           options.ExcludeICMP,
 			InterfaceMonitor:                      networkManager.InterfaceMonitor(),
 			EXP_MultiPendingPackets:               multiPendingPackets,
 		},
@@ -269,6 +270,17 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 			if err != nil {
 				return nil, err
 			}
+		}
+	}
+	if options.ExcludeICMP {
+		if runtime.GOOS == "android" {
+			return nil, E.New("`exclude_icmp` is not supported on Android")
+		}
+		if !options.AutoRedirect {
+			return nil, E.New("`auto_redirect` is required by `exclude_icmp`")
+		}
+		if disable, parseErr := strconv.ParseBool(os.Getenv("DISABLE_NFTABLES")); parseErr == nil && disable {
+			return nil, E.New("`exclude_icmp` requires nftables (DISABLE_NFTABLES must not be set)")
 		}
 	}
 	return inbound, nil
