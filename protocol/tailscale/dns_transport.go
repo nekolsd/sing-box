@@ -179,9 +179,9 @@ func (t *DNSTransport) createResolver(directDialer func() N.Dialer, resolver *dn
 	}
 	if len(resolver.BootstrapResolution) > 0 {
 		bootstrapTransport := transport.NewUDPRaw(t.logger, t.TransportAdapter, myDialer, M.SocksaddrFrom(resolver.BootstrapResolution[0], 53))
-		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, "", adapter.DNSQueryOptions{Transport: bootstrapTransport}, 0)
+		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, false, "", adapter.DNSQueryOptions{Transport: bootstrapTransport}, 0)
 	} else {
-		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, "", t.endpoint.queryOptions, 0)
+		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, false, "", t.endpoint.queryOptions, 0)
 	}
 	if isHTTPScheme {
 		serverAddr := M.ParseSocksaddrHostPortStr(serverURL.Hostname(), serverURL.Port())
