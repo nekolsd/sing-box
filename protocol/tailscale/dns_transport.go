@@ -152,7 +152,7 @@ func (t *DNSTransport) createResolver(directDialer func() N.Dialer, resolver *dn
 	}
 	if len(resolver.BootstrapResolution) > 0 {
 		bootstrapTransport := transport.NewUDPRaw(t.logger, t.TransportAdapter, myDialer, M.SocksaddrFrom(resolver.BootstrapResolution[0], 53))
-		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, "", adapter.DNSQueryOptions{Transport: bootstrapTransport}, 0)
+		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, false, "", adapter.DNSQueryOptions{Transport: bootstrapTransport}, 0)
 	}
 	if serverAddr := M.ParseSocksaddr(resolver.Addr); serverAddr.IsValid() {
 		if serverAddr.Port == 0 {
