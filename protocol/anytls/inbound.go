@@ -184,9 +184,17 @@ func (h *inboundHandler) NewConnectionEx(ctx context.Context, conn net.Conn, sou
 	metadata.Destination = destination.Unwrap()
 	if userName, _ := auth.UserFromContext[string](ctx); userName != "" {
 		metadata.User = userName
-		h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+		if uot.IsUoTDestination(metadata.Destination) {
+			h.logger.InfoContext(ctx, "[", userName, "] inbound connection to UoT session")
+		} else {
+			h.logger.InfoContext(ctx, "[", userName, "] inbound connection to ", metadata.Destination)
+		}
 	} else {
-		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		if uot.IsUoTDestination(metadata.Destination) {
+			h.logger.InfoContext(ctx, "inbound connection to UoT session")
+		} else {
+			h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
+		}
 	}
 	h.router.RouteConnectionEx(ctx, conn, metadata, onClose)
 }

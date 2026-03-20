@@ -130,6 +130,8 @@ func (h *Inbound) NewPacketEx(buffer *buf.Buffer, source M.Socksaddr) {
 func (h *Inbound) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext) error {
 	if mux.IsMuxDestination(metadata.Destination) {
 		h.logger.InfoContext(ctx, "inbound connection to multiplex session")
+	} else if uot.IsUoTDestination(metadata.Destination) {
+		h.logger.InfoContext(ctx, "inbound connection to UoT session")
 	} else {
 		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
 	}

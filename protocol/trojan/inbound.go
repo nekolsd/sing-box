@@ -10,6 +10,7 @@ import (
 	"github.com/sagernet/sing-box/common/listener"
 	"github.com/sagernet/sing-box/common/mux"
 	"github.com/sagernet/sing-box/common/tls"
+	"github.com/sagernet/sing-box/common/uot"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
@@ -197,6 +198,8 @@ func (h *Inbound) newConnection(ctx context.Context, conn net.Conn, metadata ada
 	}
 	if mux.IsMuxDestination(metadata.Destination) {
 		h.logger.InfoContext(ctx, "[", user, "] inbound connection to multiplex session")
+	} else if uot.IsUoTDestination(metadata.Destination) {
+		h.logger.InfoContext(ctx, "[", user, "] inbound connection to UoT session")
 	} else {
 		h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	}
