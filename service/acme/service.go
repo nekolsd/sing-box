@@ -94,6 +94,11 @@ func NewCertificateProvider(ctx context.Context, logger log.ContextLogger, tag s
 		Storage:           storage,
 		Logger:            zapLogger,
 	}
+	if len(options.Domain) > 1 {
+		config.SubjectToSANs = map[string][]string{
+			options.Domain[0]: options.Domain[1:],
+		}
+	}
 	if options.KeyType != "" {
 		var keyType certmagic.KeyType
 		switch options.KeyType {
@@ -129,6 +134,19 @@ func NewCertificateProvider(ctx context.Context, logger log.ContextLogger, tag s
 		AltHTTPPort:             int(options.AlternativeHTTPPort),
 		AltTLSALPNPort:          int(options.AlternativeTLSPort),
 		Logger:                  zapLogger,
+	}
+	if options.PreferredChain != nil {
+		acmeIssuer.PreferredChains = certmagic.ChainPreference{
+			Smallest:       options.PreferredChain.Smallest,
+			RootCommonName: options.PreferredChain.RootCommonName,
+			AnyCommonName:  options.PreferredChain.AnyCommonName,
+		}
+	} else if acmeServer == certmagic.LetsEncryptProductionCA &&
+		options.KeyType != option.ACMEKeyTypeRSA2048 &&
+		options.KeyType != option.ACMEKeyTypeRSA4096 {
+		acmeIssuer.PreferredChains = certmagic.ChainPreference{
+			RootCommonName: []string{"ISRG Root X2"},
+		}
 	}
 	acmeHTTPClient, err := newACMEHTTPClient(ctx, logger, options)
 	if err != nil {

@@ -26,6 +26,13 @@ type ACMECertificateProviderOptions struct {
 	KeyType                 ACMEKeyType                        `json:"key_type,omitempty"`
 	Profile                 string                             `json:"profile,omitempty"`
 	HTTPClient              *HTTPClientOptions                 `json:"http_client,omitempty"`
+	PreferredChain          *ACMEPreferredChainOptions         `json:"preferred_chain,omitempty"`
+}
+
+type ACMEPreferredChainOptions struct {
+	Smallest       *bool                      `json:"smallest,omitempty"`
+	RootCommonName badoption.Listable[string] `json:"root_common_name,omitempty"`
+	AnyCommonName  badoption.Listable[string] `json:"any_common_name,omitempty"`
 }
 
 type _ACMEProviderDNS01ChallengeOptions struct {
