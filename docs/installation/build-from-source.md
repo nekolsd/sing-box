@@ -82,9 +82,9 @@ The default build tag lists and linker flags are available as files in the repos
 
 | File | Description |
 |------|-------------|
-| `release/DEFAULT_BUILD_TAGS` | Default for Linux (common architectures), Darwin, and Android. |
-| `release/DEFAULT_BUILD_TAGS_WINDOWS` | Default for Windows (includes `with_purego`). |
-| `release/DEFAULT_BUILD_TAGS_OTHERS` | Default for other platforms (no `with_naive_outbound`). |
+| `release/DEFAULT_BUILD_TAGS_LINUX` | Default for Linux. |
+| `release/DEFAULT_BUILD_TAGS_DARWIN` | Default for Darwin (macOS). |
+| `release/DEFAULT_BUILD_TAGS_WINDOWS` | Default for Windows. |
 | `release/LDFLAGS` | Required linker flags (see above). |
 
 ## :material-layers: with_naive_outbound

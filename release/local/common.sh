@@ -11,7 +11,7 @@ INSTALL_CONFIG_PATH="/usr/local/etc/sing-box"
 INSTALL_DATA_PATH="/var/lib/sing-box"
 SYSTEMD_SERVICE_PATH="/etc/systemd/system"
 
-DEFAULT_BUILD_TAGS="$(cat "$PROJECT_DIR/release/DEFAULT_BUILD_TAGS_OTHERS")"
+DEFAULT_BUILD_TAGS="$(cat "$PROJECT_DIR/release/DEFAULT_BUILD_TAGS_LINUX")"
 
 setup_environment() {
     if [ -d /usr/local/go ]; then

@@ -86,9 +86,9 @@ go build -tags "tag_a tag_b" ./cmd/sing-box
 
 | 文件 | 说明 |
 |------|------|
-| `release/DEFAULT_BUILD_TAGS` | Linux（常见架构）、Darwin 和 Android 的默认标签。 |
-| `release/DEFAULT_BUILD_TAGS_WINDOWS` | Windows 的默认标签（包含 `with_purego`）。 |
-| `release/DEFAULT_BUILD_TAGS_OTHERS` | 其他平台的默认标签（不含 `with_naive_outbound`）。 |
+| `release/DEFAULT_BUILD_TAGS_LINUX` | Linux 的默认标签。 |
+| `release/DEFAULT_BUILD_TAGS_DARWIN` | Darwin (macOS) 的默认标签。 |
+| `release/DEFAULT_BUILD_TAGS_WINDOWS` | Windows 的默认标签。 |
 | `release/LDFLAGS` | 必需的链接器标志（参见上文）。 |
 
 ## :material-layers: with_naive_outbound

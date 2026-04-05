@@ -44,7 +44,7 @@ jobs:
       - name: Set build tags and ldflags
         shell: bash
         run: |
-          echo "BUILD_TAGS=$(cat release/DEFAULT_BUILD_TAGS_OTHERS)" >> "$GITHUB_ENV"
+          echo "BUILD_TAGS=$(cat release/DEFAULT_BUILD_TAGS_TEST)" >> "$GITHUB_ENV"
           echo "LDFLAGS_SHARED=$(cat release/LDFLAGS)" >> "$GITHUB_ENV"
       - name: Test (unix)
         if: matrix.os != 'windows-latest'
