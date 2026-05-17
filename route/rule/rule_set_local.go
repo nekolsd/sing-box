@@ -94,11 +94,11 @@ func (s *LocalRuleSet) reloadFile(path string) error {
 	if err != nil {
 		return err
 	}
-	fs, err := os.Stat(path)
+	fi, err := os.Stat(path)
 	if err != nil {
 		return err
 	}
-	s.lastUpdated = fs.ModTime()
+	s.lastUpdated = fi.ModTime()
 	return nil
 }
 

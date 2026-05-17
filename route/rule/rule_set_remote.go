@@ -240,11 +240,11 @@ func (s *RemoteRuleSet) loadCacheFile() error {
 			lastUpdated = savedSet.LastUpdated
 			lastEtag = savedSet.LastEtag
 		} else {
-			fs, err := os.Stat(s.path)
+			fi, err := os.Stat(s.path)
 			if err != nil {
 				return err
 			}
-			lastUpdated = fs.ModTime()
+			lastUpdated = fi.ModTime()
 		}
 	} else if savedSet != nil && len(savedSet.Content) > 0 {
 		content = savedSet.Content
