@@ -20,6 +20,7 @@ import (
 
 type Adapter struct {
 	ctx             context.Context
+	cancel          context.CancelFunc
 	outbound        adapter.OutboundManager
 	endpoint        adapter.EndpointManager
 	router          adapter.Router
@@ -56,8 +57,10 @@ func NewAdapter(ctx context.Context, router adapter.Router, outbound adapter.Out
 	if interval < time.Minute {
 		interval = time.Minute
 	}
+	ctx, cancel := context.WithCancel(ctx)
 	return Adapter{
 		ctx:          ctx,
+		cancel:       cancel,
 		outbound:     outbound,
 		endpoint:     endpoint,
 		router:       router,
@@ -217,6 +220,9 @@ func (a *Adapter) UpdateGroups() {
 }
 
 func (a *Adapter) Close() error {
+	if a.cancel != nil {
+		a.cancel()
+	}
 	if a.ticker != nil {
 		a.ticker.Stop()
 	}

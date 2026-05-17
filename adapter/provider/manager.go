@@ -88,7 +88,7 @@ func (m *Manager) Close() error {
 			monitor.Finish()
 		}
 	}
-	return nil
+	return err
 }
 
 func (m *Manager) Providers() []adapter.Provider {
