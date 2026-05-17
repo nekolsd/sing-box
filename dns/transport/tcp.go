@@ -32,7 +32,7 @@ type dnsTransportManager interface {
 	markPipelineDetected() bool
 	isPipelineDetected() bool
 	getDetectionCounters() (*int32, *int32, *int32)
-	removeActiveConn(conn *reuseableDNSConn)
+	releaseActiveConn(conn *reuseableDNSConn) int32
 }
 
 func RegisterTCP(registry *dns.TransportRegistry) {
@@ -44,6 +44,7 @@ type TCPTransport struct {
 	dialer     N.Dialer
 	serverAddr M.Socksaddr
 	pipelinePool
+	closed atomic.Bool
 }
 
 func NewTCP(ctx context.Context, logger log.ContextLogger, tag string, options option.RemoteTCPDNSServerOptions) (adapter.DNSTransport, error) {
@@ -96,7 +97,11 @@ func NewTCP(ctx context.Context, logger log.ContextLogger, tag string, options o
 		},
 	}
 	if enableConnReuse {
-		transport.connections = newReuseableDNSConnPool(0)
+		poolMode := ConnPoolOrdered
+		if options.Pipeline && maxQueries == 0 {
+			poolMode = ConnPoolSingle
+		}
+		transport.connections = newReuseableDNSConnPool(poolMode, 0)
 	}
 	return transport, nil
 }
@@ -109,6 +114,7 @@ func (t *TCPTransport) Start(stage adapter.StartStage) error {
 }
 
 func (t *TCPTransport) Close() error {
+	t.closed.Store(true)
 	return t.pipelinePool.closePool()
 }
 
@@ -117,6 +123,9 @@ func (t *TCPTransport) Reset() {
 }
 
 func (t *TCPTransport) Exchange(ctx context.Context, message *mDNS.Msg) (*mDNS.Msg, error) {
+	if t.closed.Load() {
+		return nil, net.ErrClosed
+	}
 	if t.connections == nil {
 		return t.createNewConnection(ctx, message)
 	}
@@ -139,8 +148,9 @@ func (t *TCPTransport) createNewConnection(ctx context.Context, message *mDNS.Ms
 		if err != nil {
 			return nil, err
 		}
-		if t.enablePipeline && t.maxQueries > 0 {
-			t.addActiveConn(conn)
+		if t.enablePipeline {
+			t.reserveActiveConn(conn)
+			return conn.exchangeWithoutIncrement(ctx, message)
 		}
 		return conn.Exchange(ctx, message)
 	}
@@ -260,6 +270,19 @@ func (c *reuseableDNSConn) exchangeWithoutIncrement(ctx context.Context, message
 	return c.exchangeWithCleanup(ctx, message, true)
 }
 
+func (c *reuseableDNSConn) nextAvailableQueryId() (uint16, error) {
+	start := c.queryId
+	for {
+		c.queryId++
+		if _, exists := c.callbacks[c.queryId]; !exists {
+			return c.queryId, nil
+		}
+		if c.queryId == start {
+			return 0, E.New("no available query ID")
+		}
+	}
+}
+
 func (c *reuseableDNSConn) exchangeWithCleanup(ctx context.Context, message *mDNS.Msg, resetTimer bool) (*mDNS.Msg, error) {
 	if resetTimer && c.enablePipeline && c.idleTimer != nil {
 		c.idleTimer.Reset(c.idleTimeout)
@@ -268,11 +291,13 @@ func (c *reuseableDNSConn) exchangeWithCleanup(ctx context.Context, message *mDN
 		if resetTimer && !c.enablePipeline && c.idleTimer != nil {
 			c.idleTimer.Reset(c.idleTimeout)
 		}
-		newCount := c.activeQueries.Add(-1)
+		var newCount int32
+		if c.enablePipeline && c.transport != nil {
+			newCount = c.transport.releaseActiveConn(c)
+		} else {
+			newCount = c.activeQueries.Add(-1)
+		}
 		if newCount == 0 && c.pool != nil {
-			if c.enablePipeline && c.maxQueries > 0 && c.transport != nil {
-				c.transport.removeActiveConn(c)
-			}
 			select {
 			case <-c.done:
 				c.pool.Invalidate(c, c.err)
@@ -307,8 +332,11 @@ func (c *reuseableDNSConn) exchangeWithCleanup(ctx context.Context, message *mDN
 	})
 
 	c.access.Lock()
-	c.queryId++
-	messageId := c.queryId
+	messageId, err := c.nextAvailableQueryId()
+	if err != nil {
+		c.access.Unlock()
+		return nil, err
+	}
 	callback := &dnsCallback{
 		done: make(chan struct{}),
 	}
@@ -322,7 +350,7 @@ func (c *reuseableDNSConn) exchangeWithCleanup(ctx context.Context, message *mDN
 	}()
 
 	c.writeLock.Lock()
-	err := WriteMessage(c.Conn, messageId, message)
+	err = WriteMessage(c.Conn, messageId, message)
 	c.writeLock.Unlock()
 	if err != nil {
 		wrappedErr := E.Cause(err, "write request")

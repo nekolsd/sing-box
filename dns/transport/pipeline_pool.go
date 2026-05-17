@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/logger"
 
 	mDNS "github.com/miekg/dns"
@@ -28,9 +27,9 @@ type pipelinePool struct {
 	totalResponses        int32
 }
 
-func newReuseableDNSConnPool(maxInflight int) *ConnPool[*reuseableDNSConn] {
+func newReuseableDNSConnPool(mode ConnPoolMode, maxInflight int) *ConnPool[*reuseableDNSConn] {
 	return NewConnPool(ConnPoolOptions[*reuseableDNSConn]{
-		Mode:        ConnPoolOrdered,
+		Mode:        mode,
 		MaxInflight: maxInflight,
 		IsAlive: func(conn *reuseableDNSConn) bool {
 			select {
@@ -48,47 +47,30 @@ func newReuseableDNSConnPool(maxInflight int) *ConnPool[*reuseableDNSConn] {
 
 func (p *pipelinePool) exchange(ctx context.Context, message *mDNS.Msg, createNewConn func(context.Context, *mDNS.Msg) (*mDNS.Msg, error)) (*mDNS.Msg, error) {
 	if p.enablePipeline {
-		if p.maxQueries == 0 {
-			conn := p.getValidConnFromPool()
-			if conn != nil {
-				response, err := conn.Exchange(ctx, message)
-				if err == nil {
-					return response, nil
-				}
-				if ctx.Err() != nil {
-					return nil, err
-				}
-				p.logger.DebugContext(ctx, "retrying query on new connection after reused conn failure: ", err)
+		conn := p.findAndReserveActiveConn()
+		if conn != nil {
+			response, err := conn.exchangeWithoutIncrement(ctx, message)
+			if err == nil {
+				return response, nil
 			}
-			return createNewConn(ctx, message)
-		} else {
-			conn := p.findAndReserveActiveConn()
-			if conn != nil {
-				response, err := conn.exchangeWithoutIncrement(ctx, message)
-				if err == nil {
-					return response, nil
-				}
-				if ctx.Err() != nil {
-					return nil, err
-				}
-				p.logger.DebugContext(ctx, "retrying query after active conn failure: ", err)
+			if ctx.Err() != nil {
+				return nil, err
 			}
-
-			conn = p.getValidConnFromPool()
-			if conn != nil {
-				p.addActiveConn(conn)
-				response, err := conn.Exchange(ctx, message)
-				if err == nil {
-					return response, nil
-				}
-				if ctx.Err() != nil {
-					return nil, err
-				}
-				p.logger.DebugContext(ctx, "retrying query on new connection after pooled conn failure: ", err)
-			}
-
-			return createNewConn(ctx, message)
+			p.logger.DebugContext(ctx, "retrying query after active conn failure: ", err)
 		}
+		conn = p.getValidConnFromPool()
+		if conn != nil {
+			p.reserveActiveConn(conn)
+			response, err := conn.exchangeWithoutIncrement(ctx, message)
+			if err == nil {
+				return response, nil
+			}
+			if ctx.Err() != nil {
+				return nil, err
+			}
+			p.logger.DebugContext(ctx, "retrying query on new connection after pooled conn failure: ", err)
+		}
+		return createNewConn(ctx, message)
 	} else {
 		conn := p.getValidConnFromPool()
 		if conn != nil {
@@ -130,10 +112,8 @@ func (p *pipelinePool) resetPool() {
 }
 
 func (p *pipelinePool) getValidConnFromPool() *reuseableDNSConn {
-	conn, _, err := p.connections.Acquire(context.Background(), func(_ context.Context) (*reuseableDNSConn, error) {
-		return nil, E.New("no pooled connection available")
-	})
-	if err != nil {
+	conn, loaded := p.connections.AcquireIdle()
+	if !loaded {
 		return nil
 	}
 	return conn
@@ -162,11 +142,6 @@ func (p *pipelinePool) findAndReserveActiveConn() *reuseableDNSConn {
 		}
 	}
 
-	if bestConn != nil && minQueries == 0 && closedCount == 0 {
-		bestConn.activeQueries.Add(1)
-		return bestConn
-	}
-
 	if closedCount > 0 {
 		validConns := make([]*reuseableDNSConn, 0, len(p.activeConns)-closedCount)
 		for _, conn := range p.activeConns {
@@ -186,29 +161,36 @@ func (p *pipelinePool) findAndReserveActiveConn() *reuseableDNSConn {
 	return bestConn
 }
 
-func (p *pipelinePool) addActiveConn(conn *reuseableDNSConn) {
+func (p *pipelinePool) reserveActiveConn(conn *reuseableDNSConn) {
 	p.activeAccess.Lock()
 	defer p.activeAccess.Unlock()
 
-	if slices.Contains(p.activeConns, conn) {
-		return
-	}
-
-	p.activeConns = append(p.activeConns, conn)
-}
-
-func (p *pipelinePool) removeActiveConn(conn *reuseableDNSConn) {
-	p.activeAccess.Lock()
-	defer p.activeAccess.Unlock()
-
-	for i, c := range p.activeConns {
-		if c == conn {
-			last := len(p.activeConns) - 1
-			p.activeConns[i] = p.activeConns[last]
-			p.activeConns = p.activeConns[:last]
-			return
+	select {
+	case <-conn.done:
+	default:
+		if !slices.Contains(p.activeConns, conn) {
+			p.activeConns = append(p.activeConns, conn)
 		}
 	}
+	conn.activeQueries.Add(1)
+}
+
+func (p *pipelinePool) releaseActiveConn(conn *reuseableDNSConn) int32 {
+	p.activeAccess.Lock()
+	defer p.activeAccess.Unlock()
+
+	newCount := conn.activeQueries.Add(-1)
+	if newCount == 0 {
+		for i, c := range p.activeConns {
+			if c == conn {
+				last := len(p.activeConns) - 1
+				p.activeConns[i] = p.activeConns[last]
+				p.activeConns = p.activeConns[:last]
+				break
+			}
+		}
+	}
+	return newCount
 }
 
 func (p *pipelinePool) markPipelineDetected() bool {

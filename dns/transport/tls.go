@@ -80,6 +80,12 @@ func NewTLS(ctx context.Context, logger log.ContextLogger, tag string, options o
 }
 
 func NewTLSRaw(_ context.Context, logger logger.ContextLogger, adapter dns.TransportAdapter, dialer N.Dialer, serverAddr M.Socksaddr, tlsConfig tls.Config, enablePipeline bool, idleTimeout time.Duration, disableKeepAlive bool, maxQueries int) *TLSTransport {
+	poolMode := ConnPoolOrdered
+	maxInflight := tlsDNSMaxInflight
+	if enablePipeline && maxQueries == 0 {
+		poolMode = ConnPoolSingle
+		maxInflight = 0
+	}
 	return &TLSTransport{
 		TransportAdapter: adapter,
 		dialer:           tls.NewDialer(dialer, tlsConfig),
@@ -91,7 +97,7 @@ func NewTLSRaw(_ context.Context, logger logger.ContextLogger, adapter dns.Trans
 			idleTimeout:      idleTimeout,
 			disableKeepAlive: disableKeepAlive,
 			maxQueries:       maxQueries,
-			connections:      newReuseableDNSConnPool(tlsDNSMaxInflight),
+			connections:      newReuseableDNSConnPool(poolMode, maxInflight),
 		},
 	}
 }
@@ -130,8 +136,9 @@ func (t *TLSTransport) createNewConnection(ctx context.Context, message *mDNS.Ms
 	if err != nil {
 		return nil, err
 	}
-	if t.enablePipeline && t.maxQueries > 0 {
-		t.addActiveConn(conn)
+	if t.enablePipeline {
+		t.reserveActiveConn(conn)
+		return conn.exchangeWithoutIncrement(ctx, message)
 	}
 	return conn.Exchange(ctx, message)
 }

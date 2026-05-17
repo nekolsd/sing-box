@@ -103,6 +103,35 @@ func (p *ConnPool[T]) AcquireShared(ctx context.Context, dial func(context.Conte
 	return p.acquireShared(ctx, dial)
 }
 
+func (p *ConnPool[T]) AcquireIdle() (T, bool) {
+	var zero T
+	if p.options.Mode != ConnPoolOrdered {
+		return zero, false
+	}
+	for {
+		p.access.Lock()
+		if p.closed {
+			p.access.Unlock()
+			return zero, false
+		}
+		current := p.state
+		element := current.idle.Front()
+		if element == nil {
+			p.access.Unlock()
+			return zero, false
+		}
+		idleConn := current.idle.Remove(element)
+		delete(current.idleElements, idleConn)
+		if p.options.IsAlive(idleConn) {
+			p.access.Unlock()
+			return idleConn, true
+		}
+		delete(current.all, idleConn)
+		p.access.Unlock()
+		p.options.Close(idleConn, net.ErrClosed)
+	}
+}
+
 func (p *ConnPool[T]) Release(conn T, reuse bool) {
 	p.access.Lock()
 	if p.closed {
