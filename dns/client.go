@@ -48,6 +48,16 @@ func removeAnswersOfType(answers []dns.RR, rrType uint16) []dns.RR {
 	return filteredAnswers
 }
 
+func nextRoundRobinIndex(index *atomic.Int32, length int) int32 {
+	for {
+		oldIndex := index.Load()
+		newIndex := (oldIndex + 1) % int32(length)
+		if index.CompareAndSwap(oldIndex, newIndex) {
+			return newIndex
+		}
+	}
+}
+
 type dnsMsg struct {
 	ipv4Index atomic.Int32
 	ipv6Index atomic.Int32
@@ -68,8 +78,7 @@ func (dm *dnsMsg) applyRoundRobin(msg *dns.Msg) {
 		}
 	}
 	if len(ipv4Answers) > 1 {
-		newIndex := (dm.ipv4Index.Add(1) % int32(len(ipv4Answers)))
-		dm.ipv4Index.Store(newIndex)
+		newIndex := nextRoundRobinIndex(&dm.ipv4Index, len(ipv4Answers))
 		rotatedIPv4 := reverseRotateSlice(ipv4Answers, newIndex)
 		msg.Answer = removeAnswersOfType(msg.Answer, dns.TypeA)
 		for _, ipv4 := range rotatedIPv4 {
@@ -77,8 +86,7 @@ func (dm *dnsMsg) applyRoundRobin(msg *dns.Msg) {
 		}
 	}
 	if len(ipv6Answers) > 1 {
-		newIndex := (dm.ipv6Index.Add(1) % int32(len(ipv6Answers)))
-		dm.ipv6Index.Store(newIndex)
+		newIndex := nextRoundRobinIndex(&dm.ipv6Index, len(ipv6Answers))
 		rotatedIPv6 := reverseRotateSlice(ipv6Answers, newIndex)
 		msg.Answer = removeAnswersOfType(msg.Answer, dns.TypeAAAA)
 		for _, ipv6 := range rotatedIPv6 {
@@ -797,7 +805,7 @@ func FixedResponseTXT(id uint16, question dns.Question, records []string, timeTo
 			&dns.TXT{
 				Hdr: dns.RR_Header{
 					Name:   question.Name,
-					Rrtype: dns.TypeA,
+					Rrtype: dns.TypeTXT,
 					Class:  dns.ClassINET,
 					Ttl:    timeToLive,
 				},
@@ -824,7 +832,7 @@ func FixedResponseMX(id uint16, question dns.Question, records []*net.MX, timeTo
 		response.Answer = append(response.Answer, &dns.MX{
 			Hdr: dns.RR_Header{
 				Name:   question.Name,
-				Rrtype: dns.TypeA,
+				Rrtype: dns.TypeMX,
 				Class:  dns.ClassINET,
 				Ttl:    timeToLive,
 			},
