@@ -3,6 +3,7 @@ package rule
 import (
 	"io"
 	"strings"
+	"sync/atomic"
 
 	"github.com/sagernet/sing-box/adapter"
 	C "github.com/sagernet/sing-box/constant"
@@ -11,12 +12,12 @@ import (
 )
 
 type abstractRule struct {
-	disabled bool
+	disabled atomic.Bool
 	uuid     string
 }
 
 func (r *abstractRule) Disabled() bool {
-	return r.disabled
+	return r.disabled.Load()
 }
 
 func (r *abstractRule) UUID() string {
@@ -24,7 +25,12 @@ func (r *abstractRule) UUID() string {
 }
 
 func (r *abstractRule) ChangeStatus() {
-	r.disabled = !r.disabled
+	for {
+		disabled := r.disabled.Load()
+		if r.disabled.CompareAndSwap(disabled, !disabled) {
+			return
+		}
+	}
 }
 
 type abstractDefaultRule struct {

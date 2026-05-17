@@ -76,7 +76,7 @@ func NewDefaultRule(ctx context.Context, logger log.ContextLogger, options optio
 	}
 	router := service.FromContext[adapter.Router](ctx)
 	networkManager := service.FromContext[adapter.NetworkManager](ctx)
-	if rule.domainMatchStrategy == C.DomainMatchStrategyAsIS {
+	if router != nil && rule.domainMatchStrategy == C.DomainMatchStrategyAsIS {
 		rule.domainMatchStrategy = router.DefaultDomainMatchStrategy()
 	}
 	if len(options.Inbound) > 0 {
@@ -341,7 +341,7 @@ func NewLogicalRule(ctx context.Context, logger log.ContextLogger, options optio
 		},
 	}
 	router := service.FromContext[adapter.Router](ctx)
-	if rule.domainMatchStrategy == C.DomainMatchStrategyAsIS {
+	if router != nil && rule.domainMatchStrategy == C.DomainMatchStrategyAsIS {
 		rule.domainMatchStrategy = router.DefaultDomainMatchStrategy()
 	}
 	switch options.Mode {
