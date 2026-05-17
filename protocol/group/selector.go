@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -34,6 +35,7 @@ type Selector struct {
 	outbound                     adapter.OutboundManager
 	connection                   adapter.ConnectionManager
 	logger                       logger.ContextLogger
+	providerAccess               sync.RWMutex
 	tags                         []string
 	link                         string
 	defaultTag                   string
@@ -134,13 +136,20 @@ func (s *Selector) Start() error {
 func (s *Selector) Now() string {
 	selected := s.selected.Load()
 	if selected == nil {
+		s.providerAccess.RLock()
+		defer s.providerAccess.RUnlock()
+		if len(s.tags) == 0 {
+			return ""
+		}
 		return s.tags[0]
 	}
 	return selected.Tag()
 }
 
 func (s *Selector) All() []string {
-	return s.tags
+	s.providerAccess.RLock()
+	defer s.providerAccess.RUnlock()
+	return append([]string(nil), s.tags...)
 }
 
 func (s *Selector) URLTestLink() string {
@@ -152,7 +161,9 @@ func (s *Selector) Selected() adapter.Outbound {
 }
 
 func (s *Selector) SelectOutbound(tag string) bool {
+	s.providerAccess.RLock()
 	detour, loaded := s.outbounds[tag]
+	s.providerAccess.RUnlock()
 	if !loaded {
 		return false
 	}
@@ -223,6 +234,7 @@ func (s *Selector) onProviderUpdated(tag string) error {
 	if !loaded {
 		return E.New(s.Tag(), ": ", "outbound provider not found: ", tag)
 	}
+	s.providerAccess.Lock()
 	var (
 		tags          = s.Dependencies()
 		outboundByTag = make(map[string]adapter.Outbound)
@@ -260,7 +272,8 @@ func (s *Selector) onProviderUpdated(tag string) error {
 		outboundByTag[detour.Tag()] = detour
 	}
 	s.tags, s.outbounds = tags, outboundByTag
-	detour, _ := s.outboundSelect()
+	detour, _ := s.outboundSelectLocked()
+	s.providerAccess.Unlock()
 	if s.selected.Swap(detour) != detour {
 		s.interruptGroup.Interrupt(s.interruptExternalConnections)
 	}
@@ -268,6 +281,12 @@ func (s *Selector) onProviderUpdated(tag string) error {
 }
 
 func (s *Selector) outboundSelect() (adapter.Outbound, error) {
+	s.providerAccess.RLock()
+	defer s.providerAccess.RUnlock()
+	return s.outboundSelectLocked()
+}
+
+func (s *Selector) outboundSelectLocked() (adapter.Outbound, error) {
 	if s.Tag() != "" {
 		cacheFile := service.FromContext[adapter.CacheFile](s.ctx)
 		if cacheFile != nil {

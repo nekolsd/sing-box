@@ -51,6 +51,7 @@ type LoadBalance struct {
 	outbound                     adapter.OutboundManager
 	connection                   adapter.ConnectionManager
 	logger                       log.ContextLogger
+	providerAccess               sync.RWMutex
 	tags                         []string
 	link                         string
 	interval                     time.Duration
@@ -169,7 +170,7 @@ func (s *LoadBalance) Now() string {
 
 func (s *LoadBalance) All() []string {
 	var all []string
-	for _, outbound := range s.group.outbounds {
+	for _, outbound := range s.group.outboundsSnapshot() {
 		all = append(all, outbound.Tag())
 	}
 	return all
@@ -259,6 +260,7 @@ func (s *LoadBalance) onProviderUpdated(tag string) error {
 	if !loaded {
 		return E.New("outbound provider not found: ", tag)
 	}
+	s.providerAccess.Lock()
 	var (
 		tags      = s.Dependencies()
 		outbounds []adapter.Outbound
@@ -296,7 +298,9 @@ func (s *LoadBalance) onProviderUpdated(tag string) error {
 		tags = append(tags, detour.Tag())
 		outbounds = append(outbounds, detour)
 	}
-	s.tags, s.group.outbounds = tags, outbounds
+	s.tags = tags
+	s.group.setOutbounds(outbounds)
+	s.providerAccess.Unlock()
 	if s.isGroupActive() {
 		s.group.access.Lock()
 		if s.group.ticker != nil {
@@ -322,6 +326,7 @@ type LoadBalanceGroup struct {
 	pause                        pause.Manager
 	pauseCallback                *list.Element[pause.Callback]
 	logger                       log.Logger
+	outboundsAccess              sync.RWMutex
 	outbounds                    []adapter.Outbound
 	link                         string
 	interval                     time.Duration
@@ -401,40 +406,65 @@ func (g *LoadBalanceGroup) Touch() {
 		g.lastActive.Store(time.Now())
 		return
 	}
-	g.ticker = time.NewTicker(g.interval)
-	go g.loopCheck()
-	g.pauseCallback = pause.RegisterTicker(g.pause, g.ticker, g.interval, nil)
+	ticker := time.NewTicker(g.interval)
+	g.ticker = ticker
+	go g.loopCheck(ticker, g.close)
+	g.pauseCallback = pause.RegisterTicker(g.pause, ticker, g.interval, nil)
 }
 
 func (g *LoadBalanceGroup) Close() error {
 	g.access.Lock()
 	defer g.access.Unlock()
-	if g.ticker == nil {
+	select {
+	case <-g.close:
 		return nil
+	default:
 	}
-	g.ticker.Stop()
-	g.pause.UnregisterCallback(g.pauseCallback)
+	g.started = false
+	if g.ticker != nil {
+		g.ticker.Stop()
+		g.pause.UnregisterCallback(g.pauseCallback)
+	}
 	close(g.close)
 	return nil
 }
 
-func (g *LoadBalanceGroup) loopCheck() {
+func (g *LoadBalanceGroup) setOutbounds(outbounds []adapter.Outbound) {
+	g.outboundsAccess.Lock()
+	g.outbounds = outbounds
+	g.outboundsAccess.Unlock()
+}
+
+func (g *LoadBalanceGroup) outboundsSnapshot() []adapter.Outbound {
+	g.outboundsAccess.RLock()
+	defer g.outboundsAccess.RUnlock()
+	return append([]adapter.Outbound(nil), g.outbounds...)
+}
+
+func (g *LoadBalanceGroup) loopCheck(ticker *time.Ticker, closeChan <-chan struct{}) {
 	if time.Since(g.lastActive.Load()) > g.interval {
 		g.lastActive.Store(time.Now())
 		g.CheckOutbounds(false)
 	}
 	for {
 		select {
-		case <-g.close:
+		case <-closeChan:
 			return
-		case <-g.ticker.C:
+		case <-ticker.C:
+		}
+		select {
+		case <-closeChan:
+			return
+		default:
 		}
 		if time.Since(g.lastActive.Load()) > g.idleTimeout {
 			g.access.Lock()
-			g.ticker.Stop()
-			g.ticker = nil
-			g.pause.UnregisterCallback(g.pauseCallback)
-			g.pauseCallback = nil
+			if g.ticker == ticker {
+				g.ticker.Stop()
+				g.ticker = nil
+				g.pause.UnregisterCallback(g.pauseCallback)
+				g.pauseCallback = nil
+			}
 			g.access.Unlock()
 			return
 		}
@@ -459,7 +489,7 @@ func (g *LoadBalanceGroup) urlTest(ctx context.Context, force bool) (map[string]
 	b, _ := batch.New(ctx, batch.WithConcurrencyNum[any](10))
 	checked := make(map[string]bool)
 	var resultAccess sync.Mutex
-	for _, detour := range g.outbounds {
+	for _, detour := range g.outboundsSnapshot() {
 		tag := detour.Tag()
 		realTag := RealTag(detour)
 		if checked[realTag] {
@@ -509,12 +539,12 @@ func (g *LoadBalanceGroup) AliveForTestUrl(proxy adapter.Outbound) bool {
 	return false
 }
 
-func (g *LoadBalanceGroup) nextFallback() adapter.Outbound {
-	length := len(g.outbounds)
+func (g *LoadBalanceGroup) nextFallbackFrom(outbounds []adapter.Outbound) adapter.Outbound {
+	length := len(outbounds)
 	if length == 0 {
 		return nil
 	}
-	return g.outbounds[int(g.fallbackIdx.Add(1))%length]
+	return outbounds[int(g.fallbackIdx.Add(1))%length]
 }
 
 func getKey(metadata *adapter.InboundContext) string {
@@ -586,7 +616,11 @@ func strategyRoundRobin(g *LoadBalanceGroup, url string) strategyFn {
 		defer idxMutex.Unlock()
 
 		i := 0
-		length := len(g.outbounds)
+		outbounds := g.outboundsSnapshot()
+		length := len(outbounds)
+		if length == 0 {
+			return nil
+		}
 
 		if touch {
 			defer func() {
@@ -596,14 +630,14 @@ func strategyRoundRobin(g *LoadBalanceGroup, url string) strategyFn {
 
 		for ; i < length; i++ {
 			id := (idx + i) % length
-			proxy := g.outbounds[id]
+			proxy := outbounds[id]
 			if g.AliveForTestUrl(proxy) {
 				i++
 				return proxy
 			}
 		}
 
-		return g.nextFallback()
+		return g.nextFallbackFrom(outbounds)
 	}
 }
 
@@ -611,24 +645,28 @@ func strategyConsistentHashing(g *LoadBalanceGroup, url string) strategyFn {
 	maxRetry := 5
 	hash := maphash.NewHasher[string]()
 	return func(metadata *adapter.InboundContext, touch bool) adapter.Outbound {
+		outbounds := g.outboundsSnapshot()
+		if len(outbounds) == 0 {
+			return nil
+		}
 		key := hash.Hash(getKey(metadata))
-		buckets := int32(len(g.outbounds))
+		buckets := int32(len(outbounds))
 		for i := 0; i < maxRetry; i, key = i+1, key+1 {
 			idx := jumpHash(key, buckets)
-			proxy := g.outbounds[idx]
+			proxy := outbounds[idx]
 			if g.AliveForTestUrl(proxy) {
 				return proxy
 			}
 		}
 
 		// when availability is poor, traverse the entire list to get the available nodes
-		for _, proxy := range g.outbounds {
+		for _, proxy := range outbounds {
 			if g.AliveForTestUrl(proxy) {
 				return proxy
 			}
 		}
 
-		return g.nextFallback()
+		return g.nextFallbackFrom(outbounds)
 	}
 }
 
@@ -638,8 +676,12 @@ func strategyStickySessions(g *LoadBalanceGroup, url string) strategyFn {
 	lruCache.SetLifetime(g.ttl)
 	hash := maphash.NewHasher[string]()
 	return func(metadata *adapter.InboundContext, touch bool) adapter.Outbound {
+		outbounds := g.outboundsSnapshot()
+		length := len(outbounds)
+		if length == 0 {
+			return nil
+		}
 		key := hash.Hash(getKeyWithSrcAndDst(metadata))
-		length := len(g.outbounds)
 		idx, has := lruCache.Get(key)
 		if !has || idx >= length {
 			idx = int(jumpHash(key+uint64(time.Now().UnixNano()), int32(length)))
@@ -647,7 +689,7 @@ func strategyStickySessions(g *LoadBalanceGroup, url string) strategyFn {
 
 		nowIdx := idx
 		for i := 1; i < maxRetry; i++ {
-			proxy := g.outbounds[nowIdx]
+			proxy := outbounds[nowIdx]
 			if g.AliveForTestUrl(proxy) {
 				if !has || nowIdx != idx {
 					lruCache.Add(key, nowIdx)
@@ -660,6 +702,6 @@ func strategyStickySessions(g *LoadBalanceGroup, url string) strategyFn {
 		}
 		fbIdx := int(jumpHash(key, int32(length)))
 		lruCache.Add(key, fbIdx)
-		return g.outbounds[fbIdx]
+		return outbounds[fbIdx]
 	}
 }
