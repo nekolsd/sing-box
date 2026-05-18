@@ -45,6 +45,7 @@ type TunInboundOptions struct {
 	IncludeMACAddress             badoption.Listable[string]       `json:"include_mac_address,omitempty"`
 	ExcludeMACAddress             badoption.Listable[string]       `json:"exclude_mac_address,omitempty"`
 	ExcludeICMP                   bool                             `json:"exclude_icmp,omitempty"`
+	UDPNATMode                    string                           `json:"udp_nat_mode,omitempty"`
 	UDPTimeout                    UDPTimeoutCompat                 `json:"udp_timeout,omitempty"`
 	Stack                         string                           `json:"stack,omitempty"`
 	Platform                      *TunPlatformOptions              `json:"platform,omitempty"`
@@ -65,7 +66,7 @@ type TunInboundOptions struct {
 	// Deprecated: merged to RouteExcludeAddress
 	Inet6RouteExcludeAddress badoption.Listable[netip.Prefix] `json:"inet6_route_exclude_address,omitempty"`
 	// Deprecated: removed
-	EndpointIndependentNat bool `json:"endpoint_independent_nat,omitempty"`
+	EndpointIndependentNat *bool `json:"endpoint_independent_nat,omitempty"`
 }
 
 type FwMark uint32

@@ -42,6 +42,7 @@ type Inbound struct {
 	logger                      log.ContextLogger
 	tunOptions                  tun.Options
 	udpTimeout                  time.Duration
+	udpNatMode                  tun.UDPNATMode
 	dnsHijackAddress            []netip.Addr
 	stack                       string
 	tunIf                       tun.Tun
@@ -71,6 +72,9 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	//nolint:staticcheck
 	if options.InboundOptions != (option.InboundOptions{}) {
 		return nil, E.New("legacy inbound fields are deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-legacy-inbound-fields-to-rule-actions")
+	}
+	if options.EndpointIndependentNat != nil {
+		logger.Warn("`endpoint_independent_nat` is deprecated and ignored; use `udp_nat_mode` instead")
 	}
 
 	address := options.Address
@@ -116,6 +120,15 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		udpTimeout = time.Duration(options.UDPTimeout)
 	} else {
 		udpTimeout = C.UDPTimeout
+	}
+	var udpNatMode tun.UDPNATMode
+	switch options.UDPNATMode {
+	case "", "endpoint_independent", "endpoint-independent", "snat":
+		udpNatMode = tun.UDPNATModeEndpointIndependent
+	case "destination_dependent", "destination-dependent", "dnat":
+		udpNatMode = tun.UDPNATModeDestinationDependent
+	default:
+		return nil, E.New("unknown udp_nat_mode: ", options.UDPNATMode)
 	}
 	var err error
 	includeUID := uidToRange(options.IncludeUID)
@@ -223,6 +236,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 			EXP_MultiPendingPackets:               multiPendingPackets,
 		},
 		udpTimeout:        udpTimeout,
+		udpNatMode:        udpNatMode,
 		stack:             options.Stack,
 		platformInterface: platformInterface,
 		platformOptions:   common.PtrValueOrDefault(options.Platform),
@@ -420,6 +434,7 @@ func (t *Inbound) Start(stage adapter.StartStage) error {
 			TunOptions:             t.tunOptions,
 			UDPTimeout:             t.udpTimeout,
 			ICMPTimeout:            C.ICMPTimeout,
+			UDPNATMode:             t.udpNatMode,
 			Handler:                t,
 			Logger:                 t.logger,
 			ForwarderBindInterface: forwarderBindInterface,

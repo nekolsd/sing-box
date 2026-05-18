@@ -7,7 +7,8 @@ icon: material/new-box
     :material-plus: [include_mac_address](#include_mac_address)  
     :material-plus: [exclude_mac_address](#exclude_mac_address)  
     :material-plus: [dns_mode](#dns_mode)  
-    :material-plus: [dns_address](#dns_address)
+    :material-plus: [dns_address](#dns_address)  
+    :material-plus: [udp_nat_mode](#udp_nat_mode)
 
 !!! quote "sing-box 1.13.3 中的更改"
 
@@ -111,7 +112,7 @@ icon: material/new-box
   "route_exclude_address_set": [
     "geoip-cn"
   ],
-  "endpoint_independent_nat": false,
+  "udp_nat_mode": "endpoint_independent",
   "udp_timeout": "5m",
   "stack": "system",
   "include_interface": [
@@ -512,11 +513,16 @@ sing-box DNS 模块，等价于一条
     请注意，由于 Android VpnService 无法处理大量路由（DeadSystemException），
     因此它**在 Android 图形客户端上不起作用**，但除此之外，它在所有命令行客户端和 Apple 平台上都可以正常工作。
 
-#### endpoint_independent_nat
+#### udp_nat_mode
 
-启用独立于端点的 NAT。
+UDP NAT 映射模式。
 
-性能可能会略有下降，所以不建议在不需要的时候开启。
+可用值：
+
+- `endpoint_independent`：按源地址和源端口分组 UDP 包。这是默认值，并保留独立于端点的 NAT 行为。
+- `destination_dependent`：按源地址、源端口、目的地址和目的端口分组 UDP 包。
+
+`destination_dependent` 会让发往不同目的地的包创建独立的 UDP packet connection 并独立路由。它适合网关、严格路由和 DNS 劫持场景，但可能降低 UDP 打洞、WebRTC、P2P 或部分游戏的兼容性。
 
 #### udp_timeout
 

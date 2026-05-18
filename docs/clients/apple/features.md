@@ -27,7 +27,7 @@ SFI/SFM/SFT provides an unprivileged TUN implementation through NetworkExtension
 | `inet6_route_address`         | :material-check:  | /                 |
 | `inet4_route_exclude_address` | :material-check:  | /                 |
 | `inet6_route_exclude_address` | :material-check:  | /                 |
-| `endpoint_independent_nat`    | :material-check:  | /                 |
+| `udp_nat_mode`                | :material-check:  | /                 |
 | `stack`                       | :material-check:  | /                 |
 | `include_interface`           | :material-close:️ | Not implemented   |
 | `exclude_interface`           | :material-close:️ | Not implemented   |

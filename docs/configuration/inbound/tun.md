@@ -7,7 +7,8 @@ icon: material/new-box
     :material-plus: [include_mac_address](#include_mac_address)  
     :material-plus: [exclude_mac_address](#exclude_mac_address)  
     :material-plus: [dns_mode](#dns_mode)  
-    :material-plus: [dns_address](#dns_address)
+    :material-plus: [dns_address](#dns_address)  
+    :material-plus: [udp_nat_mode](#udp_nat_mode)
 
 !!! quote "Changes in sing-box 1.13.3"
 
@@ -110,7 +111,7 @@ icon: material/new-box
   "route_exclude_address_set": [
     "geoip-cn"
   ],
-  "endpoint_independent_nat": false,
+  "udp_nat_mode": "endpoint_independent",
   "udp_timeout": "5m",
   "stack": "system",
   "include_interface": [
@@ -526,15 +527,16 @@ Exclude custom routes when `auto_route` is enabled.
     the Android VpnService not being able to handle a large number of routes (DeadSystemException),
     but otherwise it works fine on all command line clients and Apple platforms.
 
-#### endpoint_independent_nat
+#### udp_nat_mode
 
-!!! info ""
+UDP NAT mapping mode.
 
-    This item is only available on the gvisor stack, other stacks are endpoint-independent NAT by default.
+Available values:
 
-Enable endpoint-independent NAT.
+- `endpoint_independent`: Group UDP packets by source address and source port. This is the default and preserves endpoint-independent NAT behavior.
+- `destination_dependent`: Group UDP packets by source address, source port, destination address, and destination port.
 
-Performance may degrade slightly, so it is not recommended to enable on when it is not needed.
+`destination_dependent` makes packets to different destinations create separate UDP packet connections and be routed independently. It is useful for gateway, strict routing, and DNS hijacking scenarios, but may reduce compatibility with UDP hole punching, WebRTC, P2P, or some games.
 
 #### udp_timeout
 
