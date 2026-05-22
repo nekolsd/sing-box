@@ -122,9 +122,9 @@ func (s *Store) Create(domain string, isIPv6 bool) (netip.Addr, error) {
 		if !s.inet4Current.IsValid() {
 			return netip.Addr{}, E.New("missing IPv4 fakeip address range")
 		}
-		nextAddress := s.inet4Current.Next()
-		if nextAddress == s.inet4Last || !s.inet4Range.Contains(nextAddress) {
-			nextAddress = s.inet4Range.Addr().Next().Next()
+		nextAddress, err := s.nextAvailableAddress(s.inet4Current, s.inet4Range, s.inet4Last)
+		if err != nil {
+			return netip.Addr{}, E.Cause(err, "missing available IPv4 fakeip address")
 		}
 		s.inet4Current = nextAddress
 		address = nextAddress
@@ -132,9 +132,9 @@ func (s *Store) Create(domain string, isIPv6 bool) (netip.Addr, error) {
 		if !s.inet6Current.IsValid() {
 			return netip.Addr{}, E.New("missing IPv6 fakeip address range")
 		}
-		nextAddress := s.inet6Current.Next()
-		if nextAddress == s.inet6Last || !s.inet6Range.Contains(nextAddress) {
-			nextAddress = s.inet6Range.Addr().Next().Next()
+		nextAddress, err := s.nextAvailableAddress(s.inet6Current, s.inet6Range, s.inet6Last)
+		if err != nil {
+			return netip.Addr{}, E.Cause(err, "missing available IPv6 fakeip address")
 		}
 		s.inet6Current = nextAddress
 		address = nextAddress
@@ -150,6 +150,33 @@ func (s *Store) Create(domain string, isIPv6 bool) (netip.Addr, error) {
 		Inet6Current: s.inet6Current,
 	})
 	return address, nil
+}
+
+func (s *Store) nextAvailableAddress(current netip.Addr, addressRange netip.Prefix, lastAddress netip.Addr) (netip.Addr, error) {
+	firstAddress := addressRange.Addr().Next().Next()
+	if !firstAddress.IsValid() || firstAddress == lastAddress || !addressRange.Contains(firstAddress) {
+		return netip.Addr{}, E.New("address range is too small")
+	}
+
+	nextAddress := nextAddressInRange(current, addressRange, lastAddress, firstAddress)
+	firstCandidate := nextAddress
+	for {
+		if _, loaded := s.storage.FakeIPLoad(nextAddress); !loaded {
+			return nextAddress, nil
+		}
+		nextAddress = nextAddressInRange(nextAddress, addressRange, lastAddress, firstAddress)
+		if nextAddress == firstCandidate {
+			return netip.Addr{}, E.New("address range is exhausted")
+		}
+	}
+}
+
+func nextAddressInRange(current netip.Addr, addressRange netip.Prefix, lastAddress netip.Addr, firstAddress netip.Addr) netip.Addr {
+	nextAddress := current.Next()
+	if nextAddress == lastAddress || !addressRange.Contains(nextAddress) {
+		nextAddress = firstAddress
+	}
+	return nextAddress
 }
 
 func (s *Store) Lookup(address netip.Addr) (string, bool) {

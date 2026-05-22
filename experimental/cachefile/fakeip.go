@@ -36,12 +36,39 @@ func (c *CacheFile) FakeIPMetadata() *adapter.FakeIPMetadata {
 		if err != nil {
 			return err
 		}
-		return metadata.UnmarshalBinary(metadataBinary)
+		err = metadata.UnmarshalBinary(metadataBinary)
+		if err != nil {
+			return err
+		}
+		return c.applyFakeIPMetadataHighWatermark(bucket, &metadata)
 	})
 	if err != nil {
 		return nil
 	}
 	return &metadata
+}
+
+func (c *CacheFile) applyFakeIPMetadataHighWatermark(bucket *bbolt.Bucket, metadata *adapter.FakeIPMetadata) error {
+	return bucket.ForEach(func(key []byte, _ []byte) error {
+		address, ok := netip.AddrFromSlice(key)
+		if !ok {
+			return nil
+		}
+		if address.Is4() {
+			if shouldUseFakeIPHighWatermark(metadata.Inet4Current, metadata.Inet4Range, address) {
+				metadata.Inet4Current = address
+			}
+		} else {
+			if shouldUseFakeIPHighWatermark(metadata.Inet6Current, metadata.Inet6Range, address) {
+				metadata.Inet6Current = address
+			}
+		}
+		return nil
+	})
+}
+
+func shouldUseFakeIPHighWatermark(current netip.Addr, addressRange netip.Prefix, address netip.Addr) bool {
+	return addressRange.Contains(address) && (!addressRange.Contains(current) || current.Compare(address) < 0)
 }
 
 func (c *CacheFile) FakeIPSaveMetadata(metadata *adapter.FakeIPMetadata) error {
