@@ -167,8 +167,8 @@ github.com/prometheus-community/pro-bing v0.4.0 h1:YMbv+i08gQz97OZZBwLyvmmQEEzyf
 github.com/prometheus-community/pro-bing v0.4.0/go.mod h1:b7wRYZtCcPmt4Sz319BykUU241rWLe1VFXyiyWK/dH4=
 github.com/quic-go/qpack v0.6.0 h1:g7W+BMYynC1LbYLSqRt8PBg5Tgwxn214ZZR34VIOjz8=
 github.com/quic-go/qpack v0.6.0/go.mod h1:lUpLKChi8njB4ty2bFLX2x4gzDqXwUpaO1DP9qMDZII=
-github.com/reF1nd/sing-tun v0.8.12-0.20260623160450-51170bf7d96b h1:fa8zHdqKdl209lrkYvFlreOdLhMobZ1/ntcndO4vWa8=
-github.com/reF1nd/sing-tun v0.8.12-0.20260623160450-51170bf7d96b/go.mod h1:QvarqUtHfj1ULaRR+6kZOS/OoCE+pYGq67A5tyIy+dQ=
+github.com/reF1nd/sing-tun v0.8.12-0.20260623160936-8d8bc4931560 h1:J7TV1/Z3RyRR3WeenaCrTsA6tpQgcS6X0OP9zv+Ra/Q=
+github.com/reF1nd/sing-tun v0.8.12-0.20260623160936-8d8bc4931560/go.mod h1:QvarqUtHfj1ULaRR+6kZOS/OoCE+pYGq67A5tyIy+dQ=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/safchain/ethtool v0.3.0 h1:gimQJpsI6sc1yIqP/y8GYgiXn/NjgvpM0RNoWLVVmP0=
 github.com/safchain/ethtool v0.3.0/go.mod h1:SA9BwrgyAqNo7M+uaL6IYbxpm5wk3L7Mm6ocLW+CJUs=
