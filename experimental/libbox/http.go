@@ -33,6 +33,7 @@ import (
 type HTTPClient interface {
 	RestrictedTLS()
 	ModernTLS()
+	AppendCertificateStore(store string) error
 	PinnedTLS12()
 	PinnedSHA256(sumHex string)
 	TrySocks5(port int32)
@@ -90,6 +91,30 @@ func NewHTTPClient() HTTPClient {
 		client.tls.RootCAs = store.Pool()
 	}
 	return client
+}
+
+func (c *httpClient) rootPool() *x509.CertPool {
+	if c.tls.RootCAs != nil {
+		return c.tls.RootCAs.Clone()
+	}
+	roots, err := x509.SystemCertPool()
+	if err != nil || roots == nil {
+		return x509.NewCertPool()
+	}
+	return roots
+}
+
+func (c *httpClient) AppendCertificateStore(store string) error {
+	pemContent, err := certificate.IncludedPEM(store)
+	if err != nil {
+		return err
+	}
+	roots := c.rootPool()
+	if !roots.AppendCertsFromPEM([]byte(pemContent)) {
+		return E.New("invalid included certificate PEM: ", store)
+	}
+	c.tls.RootCAs = roots
+	return nil
 }
 
 func (c *httpClient) ModernTLS() {

@@ -138,6 +138,17 @@ func (s *Store) ExclusiveAnchors() bool {
 	return s.storeType != C.CertificateStoreSystem
 }
 
+func IncludedPEM(store string) (string, error) {
+	switch store {
+	case C.CertificateStoreMozilla:
+		return mozillaIncludedPEM(), nil
+	case C.CertificateStoreChrome:
+		return chromeIncludedPEM(), nil
+	default:
+		return "", E.New("unknown certificate store: ", store)
+	}
+}
+
 func (s *Store) update() error {
 	currentPool, err := s.newBasePool()
 	if err != nil {
