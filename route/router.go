@@ -47,6 +47,7 @@ type Router struct {
 	processSearcher   process.Searcher
 	processCache      freelru.Cache[processCacheKey, processCacheEntry]
 	neighborResolver  adapter.NeighborResolver
+	neighborLogCache  sync.Map
 	pauseManager      pause.Manager
 	trackers          []adapter.ConnectionTracker
 	platformInterface adapter.PlatformInterface
