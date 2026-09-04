@@ -86,7 +86,7 @@ require (
 
 replace (
 	github.com/caddyserver/certmagic => github.com/nekolsd/certmagic v0.25.3-nekolsd
-	github.com/sagernet/sing-tun => github.com/reF1nd/sing-tun v0.8.15-0.20260831053654-9211bf84864f
+	github.com/sagernet/sing-tun => github.com/nekolsd/sing-tun v0.9.0-nekolsd
 )
 
 require (

@@ -8137,6 +8137,9 @@
             "exclude_mptcp": {
               "type": "boolean"
             },
+            "exclude_icmp": {
+              "type": "boolean"
+            },
             "loopback_address": {
               "anyOf": [
                 {
