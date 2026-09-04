@@ -186,6 +186,8 @@ func (h *Inbound) newConnectionEx(ctx context.Context, conn net.Conn, metadata a
 	}
 	if mux.IsMuxDestination(metadata.Destination) {
 		h.logger.InfoContext(ctx, "[", user, "] inbound connection to multiplex session")
+	} else if uot.IsUoTDestination(metadata.Destination) {
+		h.logger.InfoContext(ctx, "[", user, "] inbound connection to UoT session")
 	} else {
 		h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	}

@@ -145,6 +145,8 @@ func (h *RelayInbound) newConnection(ctx context.Context, conn net.Conn, metadat
 	}
 	if mux.IsMuxDestination(metadata.Destination) {
 		h.logger.InfoContext(ctx, "[", destination, "] inbound connection to multiplex session")
+	} else if uot.IsUoTDestination(metadata.Destination) {
+		h.logger.InfoContext(ctx, "[", destination, "] inbound connection to UoT session")
 	} else {
 		h.logger.InfoContext(ctx, "[", destination, "] inbound connection to ", metadata.Destination)
 	}
