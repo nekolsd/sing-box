@@ -18,7 +18,8 @@ icon: material/new-box
     :material-plus: [netns](#netns)  
     :material-plus: [udp_mapping](/zh/configuration/shared/udp-nat/#udp_mapping)  
     :material-plus: [udp_filtering](/zh/configuration/shared/udp-nat/#udp_filtering)  
-    :material-plus: [udp_nat_max](/zh/configuration/shared/udp-nat/#udp_nat_max)
+    :material-plus: [udp_nat_max](/zh/configuration/shared/udp-nat/#udp_nat_max)\
+    :material-plus: [exclude_icmp](#exclude_icmp)
 
 !!! quote "sing-box 1.13.3 中的更改"
 
@@ -103,6 +104,7 @@ icon: material/new-box
   "auto_redirect_nfqueue": 100,
   "auto_redirect_iproute2_fallback_rule_index": 32768,
   "exclude_mptcp": false,
+  "exclude_icmp": false,
   "loopback_address": [
     "10.7.0.1"
   ],
@@ -439,6 +441,18 @@ sing-box DNS 模块，等价于一条
 此类流量通常由 Apple 系统创建。
 
 启用时，MPTCP 连接将绕过 sing-box 直接连接，否则，将被拒绝以避免错误。
+
+#### exclude_icmp
+
+!!! question "由 nekolsd 分支添加"
+
+!!! quote ""
+
+    仅支持 Linux，且需要 nftables、`auto_route` 和 `auto_redirect` 已启用。
+
+启用后，ICMP 和 ICMPv6 流量将绕过 sing-box，而不会被路由至 TUN 接口。
+
+这会影响 ping、基于 ICMP 的 traceroute 等使用 ICMP 的工具和协议。
 
 #### loopback_address
 

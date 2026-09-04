@@ -30,6 +30,7 @@ type TunInboundOptions struct {
 	AutoRedirectNFQueue           uint16                           `json:"auto_redirect_nfqueue,omitempty"`
 	AutoRedirectFallbackRuleIndex int                              `json:"auto_redirect_iproute2_fallback_rule_index,omitempty"`
 	ExcludeMPTCP                  bool                             `json:"exclude_mptcp,omitempty"`
+	ExcludeICMP                   bool                             `json:"exclude_icmp,omitempty"`
 	LoopbackAddress               badoption.Listable[netip.Addr]   `json:"loopback_address,omitempty"`
 	StrictRoute                   bool                             `json:"strict_route,omitempty"`
 	RouteAddress                  badoption.Listable[netip.Prefix] `json:"route_address,omitempty"`

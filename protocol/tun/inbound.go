@@ -170,6 +170,11 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 			return nil, E.Cause(err, "parse exclude_uid_range")
 		}
 	}
+	disableNFTables, disableNFTablesErr := strconv.ParseBool(os.Getenv("DISABLE_NFTABLES"))
+	nftablesDisabled := disableNFTablesErr == nil && disableNFTables
+	if err = validateExcludeICMP(options, runtime.GOOS, nftablesDisabled); err != nil {
+		return nil, err
+	}
 
 	tableIndex := options.IPRoute2TableIndex
 	if tableIndex == 0 {
@@ -230,6 +235,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 			AutoRedirectTProxyMark:                uint32(options.AutoRedirectTProxyMark),
 			AutoRedirectNFQueue:                   nfQueue,
 			ExcludeMPTCP:                          options.ExcludeMPTCP,
+			ExcludeICMP:                           options.ExcludeICMP,
 			Inet4LoopbackAddress:                  common.Filter(options.LoopbackAddress, netip.Addr.Is4),
 			Inet6LoopbackAddress:                  common.Filter(options.LoopbackAddress, netip.Addr.Is6),
 			StrictRoute:                           options.StrictRoute,
@@ -285,7 +291,6 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		if usePlatformAutoRedirect {
 			inbound.autoRedirect, err = newPlatformAutoRedirect(inbound)
 		} else {
-			disableNFTables, parseErr := strconv.ParseBool(os.Getenv("DISABLE_NFTABLES"))
 			inbound.autoRedirect, err = tun.NewAutoRedirect(tun.AutoRedirectOptions{
 				TunOptions:      &inbound.tunOptions,
 				Context:         ctx,
@@ -294,7 +299,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 				NetworkMonitor:  networkManager.NetworkMonitor(),
 				InterfaceFinder: networkManager.InterfaceFinder(),
 				TableName:       "sing-box",
-				DisableNFTables: parseErr == nil && disableNFTables,
+				DisableNFTables: nftablesDisabled,
 			})
 		}
 		if err != nil {
@@ -309,6 +314,22 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 		}
 	}
 	return inbound, nil
+}
+
+func validateExcludeICMP(options option.TunInboundOptions, goos string, nftablesDisabled bool) error {
+	if !options.ExcludeICMP {
+		return nil
+	}
+	if goos != "linux" {
+		return E.New("`exclude_icmp` is only supported on Linux")
+	}
+	if !options.AutoRedirect {
+		return E.New("`auto_redirect` is required by `exclude_icmp`")
+	}
+	if nftablesDisabled {
+		return E.New("`exclude_icmp` requires nftables (`DISABLE_NFTABLES` must not be true)")
+	}
+	return nil
 }
 
 func uidToRange(uidList badoption.Listable[uint32]) []ranges.Range[uint32] {

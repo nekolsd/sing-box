@@ -18,7 +18,8 @@ icon: material/new-box
     :material-plus: [netns](#netns)  
     :material-plus: [udp_mapping](/configuration/shared/udp-nat/#udp_mapping)  
     :material-plus: [udp_filtering](/configuration/shared/udp-nat/#udp_filtering)  
-    :material-plus: [udp_nat_max](/configuration/shared/udp-nat/#udp_nat_max)
+    :material-plus: [udp_nat_max](/configuration/shared/udp-nat/#udp_nat_max)\
+    :material-plus: [exclude_icmp](#exclude_icmp)
 
 !!! quote "Changes in sing-box 1.13.3"
 
@@ -103,6 +104,7 @@ icon: material/new-box
   "auto_redirect_nfqueue": 100,
   "auto_redirect_iproute2_fallback_rule_index": 32768,
   "exclude_mptcp": false,
+  "exclude_icmp": false,
   "loopback_address": [
     "10.7.0.1"
   ],
@@ -446,6 +448,18 @@ MPTCP cannot be transparently proxied due to protocol limitations.
 Such traffic is usually created by Apple systems.
 
 When enabled, MPTCP connections will bypass sing-box and connect directly, otherwise, will be rejected to avoid errors by default.
+
+#### exclude_icmp
+
+!!! question "Added by the nekolsd fork"
+
+!!! quote ""
+
+    Only supported on Linux with nftables and requires `auto_route` and `auto_redirect` enabled.
+
+When enabled, ICMP and ICMPv6 traffic bypasses sing-box instead of being routed to the TUN interface.
+
+This affects tools and protocols based on ICMP, including ping and ICMP-based traceroute.
 
 #### loopback_address
 

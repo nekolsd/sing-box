@@ -27,6 +27,7 @@ type autoRedirectOptions struct {
 	AutoRedirectTProxyMark   uint32                 `json:"auto_redirect_tproxy_mark,omitempty"`
 	AutoRedirectNFQueue      uint16                 `json:"auto_redirect_nfqueue,omitempty"`
 	ExcludeMPTCP             bool                   `json:"exclude_mptcp,omitempty"`
+	ExcludeICMP              bool                   `json:"exclude_icmp,omitempty"`
 	Inet4LoopbackAddress     []netip.Addr           `json:"inet4_loopback_address,omitempty"`
 	Inet6LoopbackAddress     []netip.Addr           `json:"inet6_loopback_address,omitempty"`
 	StrictRoute              bool                   `json:"strict_route,omitempty"`
@@ -61,6 +62,7 @@ func encodeAutoRedirectOptions(options adapter.AutoRedirectOptions) ([]byte, err
 		AutoRedirectTProxyMark:   tunOptions.AutoRedirectTProxyMark,
 		AutoRedirectNFQueue:      tunOptions.AutoRedirectNFQueue,
 		ExcludeMPTCP:             tunOptions.ExcludeMPTCP,
+		ExcludeICMP:              tunOptions.ExcludeICMP,
 		Inet4LoopbackAddress:     tunOptions.Inet4LoopbackAddress,
 		Inet6LoopbackAddress:     tunOptions.Inet6LoopbackAddress,
 		StrictRoute:              tunOptions.StrictRoute,
@@ -104,6 +106,7 @@ func decodeAutoRedirectOptions(content []byte) (*tun.Options, string, uint16, er
 		AutoRedirectTProxyMark:   options.AutoRedirectTProxyMark,
 		AutoRedirectNFQueue:      options.AutoRedirectNFQueue,
 		ExcludeMPTCP:             options.ExcludeMPTCP,
+		ExcludeICMP:              options.ExcludeICMP,
 		Inet4LoopbackAddress:     options.Inet4LoopbackAddress,
 		Inet6LoopbackAddress:     options.Inet6LoopbackAddress,
 		StrictRoute:              options.StrictRoute,
