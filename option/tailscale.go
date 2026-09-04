@@ -75,6 +75,7 @@ type TailscaleDNSServerOptions struct {
 	Endpoint               string `json:"endpoint,omitempty"`
 	AcceptDefaultResolvers bool   `json:"accept_default_resolvers,omitempty"`
 	AcceptSearchDomain     bool   `json:"accept_search_domain,omitempty"`
+	TCPConcurrent          bool   `json:"tcp_concurrent,omitempty"`
 }
 
 type TailscaleCertificateProviderOptions struct {

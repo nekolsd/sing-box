@@ -22,7 +22,8 @@ icon: material/new-box
 
         "endpoint": "ts-ep",
         "accept_default_resolvers": false,
-        "accept_search_domain": false
+        "accept_search_domain": false,
+        "tcp_concurrent": false
       }
     ]
   }
@@ -50,6 +51,10 @@ if not enabled, `NXDOMAIN` will be returned for non-Tailscale domain queries.
 When enabled, single-label queries (e.g. `my-device`) are retried against each Tailscale search domain until one resolves.
 
 Default resolvers are not consulted for single-label queries regardless of `accept_default_resolvers`.
+
+#### tcp_concurrent
+
+When enabled, TCP connections to domain-based DNS resolvers are attempted concurrently across all resolved addresses.
 
 ### Examples
 
