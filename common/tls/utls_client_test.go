@@ -15,6 +15,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestRealityServerClonePreservesRejectUnknownSNI(t *testing.T) {
+	config := &RealityServerConfig{
+		config:           &utls.RealityConfig{},
+		rejectUnknownSNI: true,
+	}
+	clonedConfig := config.Clone().(*RealityServerConfig)
+	require.True(t, clonedConfig.rejectUnknownSNI)
+}
+
 func TestUTLSClientCertificateServerNameDoesNotChangeSNI(t *testing.T) {
 	config, err := NewUTLSClient(context.Background(), logger.NOP(), "", option.OutboundTLSOptions{
 		Enabled:               true,

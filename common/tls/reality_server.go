@@ -236,6 +236,7 @@ func (c *RealityServerConfig) Clone() Config {
 	return &RealityServerConfig{
 		config:           c.config.Clone(),
 		handshakeTimeout: c.handshakeTimeout,
+		rejectUnknownSNI: c.rejectUnknownSNI,
 	}
 }
 
