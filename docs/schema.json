@@ -8982,6 +8982,9 @@
         },
         "timestamp": {
           "type": "boolean"
+        },
+        "disable_color": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false
