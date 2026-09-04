@@ -76,7 +76,7 @@ func NewURLTest(ctx context.Context, router adapter.Router, logger log.ContextLo
 		connection:                   service.FromContext[adapter.ConnectionManager](ctx),
 		logger:                       logger,
 		tags:                         options.Outbounds,
-		link:                         options.URL,
+		link:                         urltest.ValidateLink(options.URL),
 		interval:                     time.Duration(options.Interval),
 		tolerance:                    options.Tolerance,
 		idleTimeout:                  time.Duration(options.IdleTimeout),
@@ -177,6 +177,10 @@ func (s *URLTest) All() []string {
 		tags = append(tags, detour.Tag())
 	}
 	return tags
+}
+
+func (s *URLTest) URLTestLink() string {
+	return s.link
 }
 
 func (s *URLTest) SelectPreMatchOutbound(metadata *adapter.InboundContext, selectOutbound func(adapter.Outbound) (adapter.Outbound, adapter.PreMatchAction)) (adapter.Outbound, adapter.PreMatchAction) {
@@ -354,6 +358,7 @@ type URLTestGroup struct {
 }
 
 func NewURLTestGroup(ctx context.Context, outboundManager adapter.OutboundManager, logger log.Logger, outbounds []adapter.Outbound, link string, interval time.Duration, tolerance uint16, idleTimeout time.Duration, fallback URLTestFallback, interruptExternalConnections bool) (*URLTestGroup, error) {
+	link = urltest.ValidateLink(link)
 	if interval == 0 {
 		interval = C.DefaultURLTestInterval
 	}
