@@ -114,8 +114,6 @@ icon: material/new-box
   "route_exclude_address_set": [
     "geoip-cn"
   ],
-  "endpoint_independent_nat": false,
-
   ... // UDP NAT Fields
 
   "stack": "system",
@@ -550,13 +548,10 @@ Exclude custom routes when `auto_route` is enabled.
 
 #### endpoint_independent_nat
 
-!!! info ""
+!!! warning "Deprecated compatibility field"
 
-    This item is only available on the gvisor stack, other stacks are endpoint-independent NAT by default.
-
-Enable endpoint-independent NAT.
-
-Performance may degrade slightly, so it is not recommended to enable on when it is not needed.
+    This legacy field is accepted only to detect old configurations and is ignored.
+    Use [`udp_mapping`](/configuration/shared/udp-nat/#udp_mapping) instead.
 
 #### stack
 

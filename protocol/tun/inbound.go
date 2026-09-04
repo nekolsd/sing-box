@@ -61,6 +61,26 @@ type Inbound struct {
 	routeExcludeAddressSet      []*netipx.IPSet
 }
 
+func udpNATMappingFromOptions(options option.TunInboundOptions) (tun.NATMapping, error) {
+	mapping := tun.NATMapping(options.UDPMapping)
+	if options.UDPNATMode == "" {
+		return mapping, nil
+	}
+	var legacyMapping tun.NATMapping
+	switch options.UDPNATMode {
+	case "endpoint_independent", "endpoint-independent", "snat":
+		legacyMapping = tun.NATMappingEndpointIndependent
+	case "destination_dependent", "destination-dependent", "dnat":
+		legacyMapping = tun.NATMappingAddressAndPortDependent
+	default:
+		return 0, E.New("unknown udp_nat_mode: ", options.UDPNATMode)
+	}
+	if mapping != tun.NATMappingEndpointIndependent {
+		return mapping, nil
+	}
+	return legacyMapping, nil
+}
+
 func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options option.TunInboundOptions) (adapter.Inbound, error) {
 	//nolint:staticcheck
 	if len(options.Inet4Address) > 0 || len(options.Inet6Address) > 0 ||
@@ -75,6 +95,16 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	//nolint:staticcheck
 	if options.InboundOptions != (option.InboundOptions{}) {
 		return nil, E.New("legacy inbound fields are deprecated in sing-box 1.11.0 and removed in sing-box 1.13.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-legacy-inbound-fields-to-rule-actions")
+	}
+	if options.EndpointIndependentNat != nil {
+		logger.Warn("`endpoint_independent_nat` is deprecated and ignored; use `udp_mapping` instead")
+	}
+	udpMapping, err := udpNATMappingFromOptions(options)
+	if err != nil {
+		return nil, err
+	}
+	if options.UDPNATMode != "" {
+		logger.Warn("`udp_nat_mode` is deprecated; use `udp_mapping` instead")
 	}
 
 	address := options.Address
@@ -127,7 +157,6 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	} else {
 		udpTimeout = C.UDPTimeout
 	}
-	var err error
 	includeUID := uidToRange(options.IncludeUID)
 	if len(options.IncludeUIDRange) > 0 {
 		includeUID, err = parseRange(includeUID, options.IncludeUIDRange)
@@ -234,7 +263,7 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 			EXP_MultiPendingPackets:               multiPendingPackets,
 		},
 		udpTimeout:        udpTimeout,
-		udpMapping:        tun.NATMapping(options.UDPMapping),
+		udpMapping:        udpMapping,
 		udpFiltering:      tun.NATFiltering(options.UDPFiltering),
 		udpNATMax:         options.UDPNATMax,
 		stack:             options.Stack,

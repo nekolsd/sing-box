@@ -115,8 +115,6 @@ icon: material/new-box
   "route_exclude_address_set": [
     "geoip-cn"
   ],
-  "endpoint_independent_nat": false,
-
   ... // UDP NAT 字段
 
   "stack": "system",
@@ -534,9 +532,10 @@ sing-box DNS 模块，等价于一条
 
 #### endpoint_independent_nat
 
-启用独立于端点的 NAT。
+!!! warning "已废弃的兼容字段"
 
-性能可能会略有下降，所以不建议在不需要的时候开启。
+    该旧字段仅用于检测旧配置，实际会被忽略。
+    请改用 [`udp_mapping`](/zh/configuration/shared/udp-nat/#udp_mapping)。
 
 #### stack
 

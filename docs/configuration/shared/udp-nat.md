@@ -41,6 +41,10 @@ UDP NAT mapping behavior.
 
 `endpoint_independent` is used by default.
 
+For compatibility with older nekolsd configurations, TUN inbounds still accept the deprecated `udp_nat_mode` field.
+`endpoint_independent` maps to `udp_mapping: endpoint_independent`; `destination_dependent` (or `dnat`) maps to
+`udp_mapping: address_and_port_dependent`. Do not configure both fields; migrate to `udp_mapping`.
+
 #### udp_filtering
 
 !!! question "Since sing-box 1.14.0"
