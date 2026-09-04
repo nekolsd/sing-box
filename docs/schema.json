@@ -141,6 +141,41 @@
       },
       "additionalProperties": false
     },
+    "ACMEPreferredChainOptions": {
+      "type": "object",
+      "properties": {
+        "smallest": {
+          "type": "boolean"
+        },
+        "root_common_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "any_common_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "ACMEProviderDNS01Challenge": {
       "oneOf": [
         {
@@ -436,6 +471,9 @@
             },
             "http_client": {
               "$ref": "#/$defs/HTTPClientReference"
+            },
+            "preferred_chain": {
+              "$ref": "#/$defs/ACMEPreferredChainOptions"
             }
           },
           "required": [
@@ -604,6 +642,9 @@
                 },
                 "http_client": {
                   "$ref": "#/$defs/HTTPClientReference"
+                },
+                "preferred_chain": {
+                  "$ref": "#/$defs/ACMEPreferredChainOptions"
                 }
               },
               "required": [

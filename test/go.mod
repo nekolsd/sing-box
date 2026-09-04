@@ -5,6 +5,7 @@ go 1.25.5
 require github.com/sagernet/sing-box v0.0.0
 
 replace (
+	github.com/caddyserver/certmagic => github.com/nekolsd/certmagic v0.25.4-nekolsd
 	github.com/sagernet/sing-anytls => github.com/reF1nd/sing-anytls v0.0.0-20260905062301-7eeaaeb4fb19
 	github.com/sagernet/sing-box => ../
 	github.com/sagernet/sing-tun => github.com/nekolsd/sing-tun v0.9.3-nekolsd-2
@@ -22,7 +23,7 @@ require (
 	github.com/sagernet/sing-shadowsocks v0.2.8
 	github.com/sagernet/sing-shadowsocks2 v0.2.1
 	github.com/sagernet/sing-snell v0.0.0-20260904135315-bc5a12ac736f
-	github.com/sagernet/sing-tun v0.9.4-0.20260910071410-6655bc286d05
+	github.com/sagernet/sing-tun v0.9.4-0.20260912075549-869f0a4d76af
 	github.com/spyzhov/ajson v0.9.4
 	github.com/stretchr/testify v1.12.0
 	go.uber.org/goleak v1.3.0

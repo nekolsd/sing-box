@@ -7,6 +7,7 @@ icon: material/new-box
     :material-plus: [account_key](#account_key)  
     :material-plus: [key_type](#key_type)  
     :material-plus: [profile](#profile)  
+    :material-plus: [preferred_chain](#preferred_chain)<br>
     :material-plus: [http_client](#http_client)
 
 # ACME
@@ -39,7 +40,12 @@ icon: material/new-box
   "dns01_challenge": {},
   "key_type": "",
   "profile": "",
-  "http_client": "" // 或 {}
+  "http_client": "", // 或 {}
+  "preferred_chain": {
+    "smallest": false,
+    "root_common_name": [],
+    "any_common_name": []
+  }
 }
 ```
 
@@ -49,7 +55,9 @@ icon: material/new-box
 
 ==必填==
 
-域名列表。
+域名列表。指定多个域名时，将申请一张把所有域名都写入 SAN 的证书。
+
+域名会去除首尾空白、转换为小写并去重。第一个域名用作主存储键；追加域名时请保持它位于首位。启动时若已有证书未覆盖更新后的域名列表，会触发续签。
 
 #### data_directory
 
@@ -155,3 +163,23 @@ ACME DNS01 质询字段。如果配置，将禁用其他质询方法。
 参阅 [HTTP 客户端字段](/zh/configuration/shared/http-client/) 了解详情。
 
 所有提供者 HTTP 请求将使用此出站。
+
+#### preferred_chain
+
+!!! question "自 sing-box 1.14.0 起"
+
+当 ACME CA 提供多条可选证书链时，选择偏好的证书链。
+
+如果未设置，sing-box 会为使用 ECC 密钥的 Let's Encrypt 证书优先选择根为 `ISRG Root X2` 的证书链。
+
+#### preferred_chain.smallest
+
+优先选择字节数最少的证书链。
+
+#### preferred_chain.root_common_name
+
+选择第一条根证书通用名匹配其中一个值的证书链。
+
+#### preferred_chain.any_common_name
+
+选择第一条包含通用名匹配其中一个值的签发者的证书链。

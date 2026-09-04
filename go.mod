@@ -84,9 +84,11 @@ require (
 	howett.net/plist v1.0.1
 )
 
-replace github.com/sagernet/sing-tun => github.com/nekolsd/sing-tun v0.9.3-nekolsd-2
-
-replace github.com/sagernet/sing-anytls => github.com/reF1nd/sing-anytls v0.0.0-20260905062301-7eeaaeb4fb19
+replace (
+	github.com/caddyserver/certmagic => github.com/nekolsd/certmagic v0.25.4-nekolsd
+	github.com/sagernet/sing-anytls => github.com/reF1nd/sing-anytls v0.0.0-20260905062301-7eeaaeb4fb19
+	github.com/sagernet/sing-tun => github.com/nekolsd/sing-tun v0.9.3-nekolsd-2
+)
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect

@@ -102,6 +102,10 @@ func NewCertificateProvider(ctx context.Context, logger log.ContextLogger, tag s
 		Storage:           storage,
 		Logger:            zapLogger,
 	}
+	domains, err := configureCertificateSubjects(config, options.Domain)
+	if err != nil {
+		return nil, err
+	}
 	if options.KeyType != "" {
 		var keyType certmagic.KeyType
 		switch options.KeyType {
@@ -122,7 +126,7 @@ func NewCertificateProvider(ctx context.Context, logger log.ContextLogger, tag s
 	}
 
 	profile := options.Profile
-	if profile == "" && acmeServer == certmagic.LetsEncryptProductionCA && slices.ContainsFunc(options.Domain, certmagic.SubjectIsIP) {
+	if profile == "" && acmeServer == certmagic.LetsEncryptProductionCA && slices.ContainsFunc(domains, certmagic.SubjectIsIP) {
 		profile = "shortlived"
 	}
 
@@ -138,6 +142,7 @@ func NewCertificateProvider(ctx context.Context, logger log.ContextLogger, tag s
 		AltTLSALPNPort:          int(options.AlternativeTLSPort),
 		Logger:                  zapLogger,
 	}
+	configurePreferredChains(&acmeIssuer, acmeServer, options)
 	acmeHTTPClient, err := newACMEHTTPClient(ctx, logger, options)
 	if err != nil {
 		return nil, err
@@ -181,9 +186,47 @@ func NewCertificateProvider(ctx context.Context, logger log.ContextLogger, tag s
 		config:        config,
 		zapLogger:     zapLogger,
 		dataDirectory: dataDirectory,
-		domain:        options.Domain,
+		domain:        domains,
 		nextProtos:    nextProtos,
 	}, nil
+}
+
+func configureCertificateSubjects(config *certmagic.Config, domains []string) ([]string, error) {
+	normalized := make([]string, 0, len(domains))
+	seen := make(map[string]bool)
+	for _, domain := range domains {
+		domain = strings.ToLower(strings.TrimSpace(domain))
+		if domain == "" {
+			return nil, E.New("ACME domain must not be empty")
+		}
+		if !seen[domain] {
+			seen[domain] = true
+			normalized = append(normalized, domain)
+		}
+	}
+	config.SubjectToSANs = nil
+	if len(normalized) > 1 {
+		config.SubjectToSANs = map[string][]string{
+			normalized[0]: slices.Clone(normalized[1:]),
+		}
+	}
+	return normalized, nil
+}
+
+func configurePreferredChains(acmeIssuer *certmagic.ACMEIssuer, acmeServer string, options option.ACMECertificateProviderOptions) {
+	if options.PreferredChain != nil {
+		acmeIssuer.PreferredChains = certmagic.ChainPreference{
+			Smallest:       options.PreferredChain.Smallest,
+			RootCommonName: options.PreferredChain.RootCommonName,
+			AnyCommonName:  options.PreferredChain.AnyCommonName,
+		}
+	} else if acmeServer == certmagic.LetsEncryptProductionCA &&
+		options.KeyType != option.ACMEKeyTypeRSA2048 &&
+		options.KeyType != option.ACMEKeyTypeRSA4096 {
+		acmeIssuer.PreferredChains = certmagic.ChainPreference{
+			RootCommonName: []string{"ISRG Root X2"},
+		}
+	}
 }
 
 func (s *Service) Start(stage adapter.StartStage) error {
