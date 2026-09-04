@@ -178,7 +178,11 @@ func (h *Inbound) newConnectionEx(ctx context.Context, conn net.Conn, metadata a
 	} else {
 		metadata.User = user
 	}
-	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
+	if mux.IsMuxDestination(metadata.Destination) {
+		h.logger.InfoContext(ctx, "[", user, "] inbound connection to multiplex session")
+	} else {
+		h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
+	}
 	h.router.RouteConnectionEx(ctx, conn, metadata, onClose)
 }
 
