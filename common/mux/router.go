@@ -11,8 +11,72 @@ import (
 	"github.com/sagernet/sing-mux"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/logger"
+	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 )
+
+func IsMuxDestination(destination M.Socksaddr) bool {
+	return destination == mux.Destination
+}
+
+type parentIDKey struct{}
+
+func contextWithParentID(ctx context.Context, id log.ID) context.Context {
+	return context.WithValue(ctx, (*parentIDKey)(nil), id)
+}
+
+func parentIDFromContext(ctx context.Context) (log.ID, bool) {
+	id, loaded := ctx.Value((*parentIDKey)(nil)).(log.ID)
+	return id, loaded
+}
+
+var _ logger.ContextLogger = (*muxContextLogger)(nil)
+
+type muxContextLogger struct {
+	logger.ContextLogger
+}
+
+func (l *muxContextLogger) prependContext(ctx context.Context, args []any) []any {
+	var prefix []any
+	if parentID, loaded := parentIDFromContext(ctx); loaded {
+		prefix = append(prefix, "[parent=", parentID.ID, "] ")
+	}
+	if inboundCtx := adapter.ContextFrom(ctx); inboundCtx != nil && inboundCtx.User != "" {
+		prefix = append(prefix, "[", inboundCtx.User, "] ")
+	}
+	if len(prefix) > 0 {
+		return append(prefix, args...)
+	}
+	return args
+}
+
+func (l *muxContextLogger) TraceContext(ctx context.Context, args ...any) {
+	l.ContextLogger.TraceContext(ctx, l.prependContext(ctx, args)...)
+}
+
+func (l *muxContextLogger) DebugContext(ctx context.Context, args ...any) {
+	l.ContextLogger.DebugContext(ctx, l.prependContext(ctx, args)...)
+}
+
+func (l *muxContextLogger) InfoContext(ctx context.Context, args ...any) {
+	l.ContextLogger.InfoContext(ctx, l.prependContext(ctx, args)...)
+}
+
+func (l *muxContextLogger) WarnContext(ctx context.Context, args ...any) {
+	l.ContextLogger.WarnContext(ctx, l.prependContext(ctx, args)...)
+}
+
+func (l *muxContextLogger) ErrorContext(ctx context.Context, args ...any) {
+	l.ContextLogger.ErrorContext(ctx, l.prependContext(ctx, args)...)
+}
+
+func (l *muxContextLogger) FatalContext(ctx context.Context, args ...any) {
+	l.ContextLogger.FatalContext(ctx, l.prependContext(ctx, args)...)
+}
+
+func (l *muxContextLogger) PanicContext(ctx context.Context, args ...any) {
+	l.ContextLogger.PanicContext(ctx, l.prependContext(ctx, args)...)
+}
 
 type Router struct {
 	router  adapter.ConnectionRouterEx
@@ -37,11 +101,15 @@ func NewRouterWithOptions(router adapter.ConnectionRouterEx, logger logger.Conte
 			return nil, E.New("brutal: invalid download speed")
 		}
 	}
+	wrappedLogger := &muxContextLogger{logger}
 	service, err := mux.NewService(mux.ServiceOptions{
 		NewStreamContext: func(ctx context.Context, conn net.Conn) context.Context {
+			if parentID, loaded := log.IDFromContext(ctx); loaded {
+				ctx = contextWithParentID(ctx, parentID)
+			}
 			return log.ContextWithNewID(ctx)
 		},
-		Logger:    logger,
+		Logger:    wrappedLogger,
 		HandlerEx: adapter.NewRouteContextHandler(router),
 		Padding:   options.Padding,
 		Brutal:    brutalOptions,

@@ -13,6 +13,10 @@ import (
 	"github.com/sagernet/sing/common/uot"
 )
 
+func IsUoTDestination(destination M.Socksaddr) bool {
+	return destination.Fqdn == uot.MagicAddress || destination.Fqdn == uot.LegacyMagicAddress
+}
+
 var _ adapter.ConnectionRouterEx = (*Router)(nil)
 
 type Router struct {
