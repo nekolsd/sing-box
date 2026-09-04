@@ -602,13 +602,17 @@ func (r *Router) prepareMatchMetadata(ctx context.Context, metadata *adapter.Inb
 		hostname, hostnameFound := r.neighborResolver.LookupHostname(metadata.Source.Addr)
 		if hostnameFound {
 			metadata.SourceHostname = hostname
-			if macFound {
-				r.logger.InfoContext(ctx, "found neighbor: ", mac, ", hostname: ", hostname)
+		}
+		if r.shouldLogNeighbor(ctx, mac, hostname, macFound, hostnameFound) {
+			if hostnameFound {
+				if macFound {
+					r.logger.InfoContext(ctx, "found neighbor: ", mac, ", hostname: ", hostname)
+				} else {
+					r.logger.InfoContext(ctx, "found neighbor hostname: ", hostname)
+				}
 			} else {
-				r.logger.InfoContext(ctx, "found neighbor hostname: ", hostname)
+				r.logger.InfoContext(ctx, "found neighbor: ", mac)
 			}
-		} else if macFound {
-			r.logger.InfoContext(ctx, "found neighbor: ", mac)
 		}
 	}
 	if metadata.Destination.Addr.IsValid() && r.dnsTransport.FakeIP() != nil && r.dnsTransport.FakeIP().Store().Contains(metadata.Destination.Addr) {
@@ -769,6 +773,37 @@ match:
 		}
 	}
 	return
+}
+
+type neighborLogEntry struct {
+	Hostname string
+}
+
+func (r *Router) shouldLogNeighbor(ctx context.Context, mac net.HardwareAddr, hostname string, macFound bool, hostnameFound bool) bool {
+	if _, hasID := log.IDFromContext(ctx); hasID {
+		return macFound || hostnameFound
+	}
+	if macFound {
+		key := "mac:" + mac.String()
+		rawEntry, loaded := r.neighborLogCache.Load(key)
+		if loaded {
+			entry, loadedEntry := rawEntry.(neighborLogEntry)
+			if loadedEntry && (!hostnameFound || entry.Hostname == hostname) {
+				return false
+			}
+		}
+		var entry neighborLogEntry
+		if hostnameFound {
+			entry.Hostname = hostname
+		}
+		r.neighborLogCache.Store(key, entry)
+		return true
+	}
+	if hostnameFound {
+		_, loaded := r.neighborLogCache.LoadOrStore("hostname:"+hostname, neighborLogEntry{Hostname: hostname})
+		return !loaded
+	}
+	return false
 }
 
 func (r *Router) actionSniff(
