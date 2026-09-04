@@ -110,6 +110,34 @@ func TestApplyResponseOptionsCacheTTL(t *testing.T) {
 	}
 }
 
+func TestFixedResponseRecordTypes(t *testing.T) {
+	txtQuestion := mDNS.Question{
+		Name:   "example.com.",
+		Qtype:  mDNS.TypeTXT,
+		Qclass: mDNS.ClassINET,
+	}
+	txtResponse := FixedResponseTXT(1, txtQuestion, []string{"ok"}, 60)
+	if len(txtResponse.Answer) != 1 {
+		t.Fatalf("expected one TXT answer, got %d", len(txtResponse.Answer))
+	}
+	if recordType := txtResponse.Answer[0].Header().Rrtype; recordType != mDNS.TypeTXT {
+		t.Fatalf("expected TXT record type, got %d", recordType)
+	}
+
+	mxQuestion := mDNS.Question{
+		Name:   "example.com.",
+		Qtype:  mDNS.TypeMX,
+		Qclass: mDNS.ClassINET,
+	}
+	mxResponse := FixedResponseMX(1, mxQuestion, []*net.MX{{Host: "mail.example.com.", Pref: 10}}, 60)
+	if len(mxResponse.Answer) != 1 {
+		t.Fatalf("expected one MX answer, got %d", len(mxResponse.Answer))
+	}
+	if recordType := mxResponse.Answer[0].Header().Rrtype; recordType != mDNS.TypeMX {
+		t.Fatalf("expected MX record type, got %d", recordType)
+	}
+}
+
 func responseWithTTL(ttl uint32) *mDNS.Msg {
 	return &mDNS.Msg{Answer: []mDNS.RR{&mDNS.A{
 		Hdr: mDNS.RR_Header{
