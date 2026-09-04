@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -276,6 +275,7 @@ func (s *ProviderRemote) fetch(ctx context.Context, isStart bool) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	infoStr := resp.Header.Get("subscription-userinfo")
 	info, hasInfo := parseInfo(infoStr)
 	switch resp.StatusCode {
@@ -317,7 +317,6 @@ func (s *ProviderRemote) fetch(ctx context.Context, isStart bool) error {
 	default:
 		return E.New("unexpected status: ", resp.Status)
 	}
-	defer resp.Body.Close()
 	contentRaw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -509,7 +508,6 @@ func (s *ProviderRemote) loopUpdate() {
 		s.ticker.Reset(s.updateInterval)
 	}
 	for {
-		runtime.GC()
 		select {
 		case <-s.ctx.Done():
 			return
@@ -571,12 +569,14 @@ func getFirstLine(content string) (string, string) {
 	return lines[0], others
 }
 
+var subscriptionInfoRegex = regexp.MustCompile(`(upload|download|total|expire)[\s\t]*=[\s\t]*(-?\d*);?`)
+
 func parseInfo(infoStr string) (adapter.SubscriptionInfo, bool) {
 	info := adapter.SubscriptionInfo{}
 	if infoStr == "" {
 		return info, false
 	}
-	reg := regexp.MustCompile(`(upload|download|total|expire)[\s\t]*=[\s\t]*(-?\d*);?`)
+	reg := subscriptionInfoRegex
 	matches := reg.FindAllStringSubmatch(infoStr, 4)
 	if len(matches) == 0 {
 		return info, false

@@ -225,12 +225,13 @@ func overrideTLSOption(options *option.OutboundTLSOptions, overrideTLSOptions *o
 	if options == nil {
 		return options
 	}
-	var defaultOptions option.OutboundTLSOptions
-	if overrideTLSOptions == nil || reflect.DeepEqual(*overrideTLSOptions, defaultOptions) {
+	var defaultOverride option.OverrideTLSOptions
+	if overrideTLSOptions == nil || reflect.DeepEqual(*overrideTLSOptions, defaultOverride) {
 		return options
 	}
 	if overrideTLSOptions.Enabled != nil && !*overrideTLSOptions.Enabled {
-		return &defaultOptions
+		var emptyTLS option.OutboundTLSOptions
+		return &emptyTLS
 	}
 	// if override.OverrideTLSOptions.Enabled != nil {
 	// options.Enabled = *override.OverrideTLSOptions.Enabled
