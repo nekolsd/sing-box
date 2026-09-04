@@ -124,8 +124,6 @@ icon: material/new-box
   "route_exclude_address_set": [
     "geoip-cn"
   ],
-  "endpoint_independent_nat": false,
-
   ... // UDP NAT 字段
 
   "multi_queue": false,

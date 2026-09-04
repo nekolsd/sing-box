@@ -41,6 +41,11 @@ UDP NAT mapping behavior.
 
 `endpoint_independent` is used by default.
 
+The nekolsd-specific `udp_nat_mode` field has been removed. Replace it with `udp_mapping`:
+`endpoint_independent`, `endpoint-independent` and `snat` map to `endpoint_independent`;
+`destination_dependent`, `destination-dependent` and `dnat` map to `address_and_port_dependent`.
+Keep `udp_filtering` unchanged; its default remains `endpoint_independent`.
+
 #### udp_filtering
 
 !!! question "Since sing-box 1.14.0"

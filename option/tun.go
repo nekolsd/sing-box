@@ -72,7 +72,7 @@ type TunInboundOptions struct {
 	// Deprecated: merged to RouteExcludeAddress
 	Inet6RouteExcludeAddress badoption.Listable[netip.Prefix] `json:"inet6_route_exclude_address,omitempty" schema:"omit"`
 	// Deprecated: removed
-	EndpointIndependentNat bool `json:"endpoint_independent_nat,omitempty" schema:"omit"`
+	EndpointIndependentNat *bool `json:"endpoint_independent_nat,omitempty" schema:"omit"`
 }
 
 type FwMark uint32

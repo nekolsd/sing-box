@@ -41,6 +41,11 @@ UDP NAT 映射行为。
 
 默认使用 `endpoint_independent`。
 
+nekolsd 扩展字段 `udp_nat_mode` 已移除，请替换为 `udp_mapping`：
+旧值 `endpoint_independent`、`endpoint-independent` 和 `snat` 对应 `endpoint_independent`；
+旧值 `destination_dependent`、`destination-dependent` 和 `dnat` 对应 `address_and_port_dependent`。
+`udp_filtering` 保持原配置，默认值仍为 `endpoint_independent`。
+
 #### udp_filtering
 
 !!! question "自 sing-box 1.14.0 起"

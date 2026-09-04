@@ -84,6 +84,10 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	if options.Stack != "" {
 		deprecated.Report(ctx, deprecated.OptionTunStack)
 	}
+	//nolint:staticcheck // Detect the deprecated option only to report that it is ignored.
+	if options.EndpointIndependentNat != nil {
+		logger.Warn("`endpoint_independent_nat` is deprecated and ignored; use `udp_mapping` instead")
+	}
 
 	address := options.Address
 	inet4Address := common.Filter(address, func(it netip.Prefix) bool {
