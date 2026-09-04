@@ -3,6 +3,8 @@ package remote
 import (
 	"context"
 	"crypto/sha256"
+	"io"
+	"net/http"
 	"testing"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -17,6 +19,25 @@ import (
 type subscriptionCacheStub struct {
 	adapter.CacheFile
 	saved *adapter.SavedBinary
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
+	return f(request)
+}
+
+type closeTrackingBody struct {
+	closed bool
+}
+
+func (b *closeTrackingBody) Read([]byte) (int, error) {
+	return 0, io.EOF
+}
+
+func (b *closeTrackingBody) Close() error {
+	b.closed = true
+	return nil
 }
 
 func (c *subscriptionCacheStub) LoadSubscription(string) *adapter.SavedBinary {
@@ -69,4 +90,39 @@ func TestProviderRemoteRejectsCacheFromDifferentURL(t *testing.T) {
 	loaded, err := provider.loadCacheFile()
 	require.NoError(t, err)
 	require.False(t, loaded)
+}
+
+func TestProviderRemoteClosesNotModifiedResponseBody(t *testing.T) {
+	ctx := context.Background()
+	logFactory := log.NewNOPFactory()
+	logger := logFactory.NewLogger("test")
+	body := &closeTrackingBody{}
+	provider := &ProviderRemote{
+		Adapter: providerAdapter.NewAdapter(
+			ctx,
+			nil,
+			nil,
+			nil,
+			logFactory,
+			logger,
+			"test",
+			C.ProviderTypeRemote,
+			option.ProviderHealthCheckOptions{},
+		),
+		ctx:    ctx,
+		logger: logger,
+		url:    "https://example.com/provider",
+		httpClient: &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusNotModified,
+				Status:     "304 Not Modified",
+				Header:     make(http.Header),
+				Body:       body,
+				Request:    request,
+			}, nil
+		})},
+	}
+
+	require.NoError(t, provider.fetch(ctx, false))
+	require.True(t, body.closed)
 }
