@@ -84,7 +84,10 @@ require (
 	howett.net/plist v1.0.1
 )
 
-replace github.com/sagernet/sing-tun => github.com/reF1nd/sing-tun v0.8.15-0.20260831053654-9211bf84864f
+replace (
+	github.com/caddyserver/certmagic => github.com/nekolsd/certmagic v0.25.3-nekolsd
+	github.com/sagernet/sing-tun => github.com/reF1nd/sing-tun v0.8.15-0.20260831053654-9211bf84864f
+)
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect

@@ -6,6 +6,7 @@ require github.com/sagernet/sing-box v0.0.0
 
 replace (
 	github.com/anytls/sing-anytls => github.com/reF1nd/sing-anytls v0.0.14-0.20260803151749-763fb5bccb9d
+	github.com/caddyserver/certmagic => github.com/nekolsd/certmagic v0.25.3-nekolsd
 	github.com/sagernet/sing-box => ../
 	github.com/sagernet/sing-tun => github.com/reF1nd/sing-tun v0.8.15-0.20260831053654-9211bf84864f
 )

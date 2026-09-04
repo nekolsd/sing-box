@@ -7,6 +7,7 @@ icon: material/new-box
     :material-plus: [account_key](#account_key)  
     :material-plus: [key_type](#key_type)  
     :material-plus: [profile](#profile)  
+    :material-plus: [preferred_chain](#preferred_chain)<br>
     :material-plus: [http_client](#http_client)
 
 # ACME
@@ -39,7 +40,12 @@ icon: material/new-box
   "dns01_challenge": {},
   "key_type": "",
   "profile": "",
-  "http_client": "" // or {}
+  "http_client": "", // or {}
+  "preferred_chain": {
+    "smallest": false,
+    "root_common_name": [],
+    "any_common_name": []
+  }
 }
 ```
 
@@ -49,7 +55,7 @@ icon: material/new-box
 
 ==Required==
 
-List of domains.
+List of domains. When multiple domains are specified, one certificate containing all domains as SANs is requested.
 
 #### data_directory
 
@@ -158,3 +164,23 @@ When empty and `provider` is Let's Encrypt, `shortlived` will be used automatica
 HTTP Client for all provider HTTP requests.
 
 See [HTTP Client Fields](/configuration/shared/http-client/) for details.
+
+#### preferred_chain
+
+!!! question "Since sing-box 1.14.0"
+
+Selects a preferred certificate chain when the ACME CA offers alternate chains.
+
+If unset, sing-box prefers the chain rooted at `ISRG Root X2` for Let's Encrypt certificates using an ECC key.
+
+#### preferred_chain.smallest
+
+Prefer the chain with the fewest bytes.
+
+#### preferred_chain.root_common_name
+
+Select the first chain whose root common name matches one of these values.
+
+#### preferred_chain.any_common_name
+
+Select the first chain containing an issuer whose common name matches one of these values.
