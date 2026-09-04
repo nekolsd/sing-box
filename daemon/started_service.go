@@ -1501,7 +1501,7 @@ func (s *StartedService) StartNetworkQualityTest(
 		return err
 	}
 
-	resolvedDialer := dialer.NewResolveDialer(boxService.ctx, outbound, true, "", adapter.DNSQueryOptions{}, 0)
+	resolvedDialer := dialer.NewResolveDialer(boxService.ctx, outbound, true, false, "", adapter.DNSQueryOptions{}, 0)
 	httpClient := networkquality.NewHTTPClient(resolvedDialer)
 	defer httpClient.CloseIdleConnections()
 
@@ -1547,7 +1547,7 @@ func (s *StartedService) StartSTUNTest(
 		return err
 	}
 
-	resolvedDialer := dialer.NewResolveDialer(boxService.ctx, outbound, true, "", adapter.DNSQueryOptions{}, 0)
+	resolvedDialer := dialer.NewResolveDialer(boxService.ctx, outbound, true, false, "", adapter.DNSQueryOptions{}, 0)
 
 	result, stunErr := stun.Run(stun.Options{
 		Server:  request.Server,

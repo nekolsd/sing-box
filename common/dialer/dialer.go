@@ -45,6 +45,9 @@ func NewWithOptions(options Options) (N.Dialer, error) {
 	)
 	hasDetour := dialOptions.Detour != "" || options.DefaultOutbound
 	if dialOptions.Detour != "" {
+		if dialOptions.TCPConcurrent {
+			return nil, E.New("tcp_concurrent is not compatible with detour")
+		}
 		outboundManager := service.FromContext[adapter.OutboundManager](options.Context)
 		if outboundManager == nil {
 			return nil, E.New("missing outbound manager")
@@ -137,6 +140,7 @@ func NewWithOptions(options Options) (N.Dialer, error) {
 			options.Context,
 			dialer,
 			dialOptions.Detour == "" && !dialOptions.TCPFastOpen,
+			dialOptions.TCPConcurrent,
 			server,
 			dnsQueryOptions,
 			resolveFallbackDelay,
