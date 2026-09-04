@@ -49,6 +49,7 @@ type DNSTransport struct {
 	endpointTag            string
 	acceptDefaultResolvers bool
 	acceptSearchDomain     bool
+	tcpConcurrent          bool
 	dnsRouter              adapter.DNSRouter
 	endpointManager        adapter.EndpointManager
 	endpoint               *Endpoint
@@ -72,6 +73,7 @@ func NewDNSTransport(ctx context.Context, logger log.ContextLogger, tag string, 
 		endpointTag:            options.Endpoint,
 		acceptDefaultResolvers: options.AcceptDefaultResolvers,
 		acceptSearchDomain:     options.AcceptSearchDomain,
+		tcpConcurrent:          options.TCPConcurrent,
 		dnsRouter:              service.FromContext[adapter.DNSRouter](ctx),
 		endpointManager:        service.FromContext[adapter.EndpointManager](ctx),
 	}, nil
@@ -181,9 +183,9 @@ func (t *DNSTransport) createResolver(directDialer func() N.Dialer, resolver *dn
 	}
 	if len(resolver.BootstrapResolution) > 0 {
 		bootstrapTransport := transport.NewUDPRaw(t.logger, t.TransportAdapter, myDialer, M.SocksaddrFrom(resolver.BootstrapResolution[0], 53))
-		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, "", adapter.DNSQueryOptions{Transport: bootstrapTransport}, 0)
+		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, t.tcpConcurrent, "", adapter.DNSQueryOptions{Transport: bootstrapTransport}, 0)
 	} else {
-		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, "", t.endpoint.queryOptions, 0)
+		myDialer = dialer.NewResolveDialer(t.ctx, myDialer, false, t.tcpConcurrent, "", t.endpoint.queryOptions, 0)
 	}
 	if isHTTPScheme {
 		serverAddr := M.ParseSocksaddrHostPortStr(serverURL.Hostname(), serverURL.Port())

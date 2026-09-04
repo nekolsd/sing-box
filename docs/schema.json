@@ -790,6 +790,9 @@
         "connect_timeout": {
           "$ref": "#/$defs/Duration"
         },
+        "tcp_concurrent": {
+          "type": "boolean"
+        },
         "tcp_fast_open": {
           "type": "boolean"
         },
@@ -2017,6 +2020,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -2202,6 +2208,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -2383,6 +2392,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -2520,6 +2532,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -2652,6 +2667,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -2847,6 +2865,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -2963,6 +2984,9 @@
             },
             "accept_search_domain": {
               "type": "boolean"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -3019,6 +3043,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -3144,6 +3171,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -3272,6 +3302,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -3431,6 +3464,9 @@
         },
         "connect_timeout": {
           "$ref": "#/$defs/Duration"
+        },
+        "tcp_concurrent": {
+          "type": "boolean"
         },
         "tcp_fast_open": {
           "type": "boolean"
@@ -3614,6 +3650,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -3897,6 +3936,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -4601,6 +4643,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -4907,6 +4952,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -5068,6 +5116,9 @@
         },
         "connect_timeout": {
           "$ref": "#/$defs/Duration"
+        },
+        "tcp_concurrent": {
+          "type": "boolean"
         },
         "tcp_fast_open": {
           "type": "boolean"
@@ -5244,6 +5295,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -8619,6 +8673,9 @@
         "connect_timeout": {
           "$ref": "#/$defs/Duration"
         },
+        "tcp_concurrent": {
+          "type": "boolean"
+        },
         "tcp_fast_open": {
           "type": "boolean"
         },
@@ -9049,6 +9106,9 @@
         },
         "connect_timeout": {
           "$ref": "#/$defs/Duration"
+        },
+        "tcp_concurrent": {
+          "type": "boolean"
         },
         "tcp_fast_open": {
           "type": "boolean"
@@ -11236,6 +11296,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -11427,6 +11490,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -11556,6 +11622,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -11696,6 +11765,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -11947,6 +12019,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -12272,6 +12347,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -12534,6 +12612,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -12740,6 +12821,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -12883,6 +12967,9 @@
                 },
                 "connect_timeout": {
                   "$ref": "#/$defs/Duration"
+                },
+                "tcp_concurrent": {
+                  "type": "boolean"
                 },
                 "tcp_fast_open": {
                   "type": "boolean"
@@ -13054,6 +13141,9 @@
                 "connect_timeout": {
                   "$ref": "#/$defs/Duration"
                 },
+                "tcp_concurrent": {
+                  "type": "boolean"
+                },
                 "tcp_fast_open": {
                   "type": "boolean"
                 },
@@ -13223,6 +13313,9 @@
                 },
                 "connect_timeout": {
                   "$ref": "#/$defs/Duration"
+                },
+                "tcp_concurrent": {
+                  "type": "boolean"
                 },
                 "tcp_fast_open": {
                   "type": "boolean"
@@ -13394,6 +13487,9 @@
                 "connect_timeout": {
                   "$ref": "#/$defs/Duration"
                 },
+                "tcp_concurrent": {
+                  "type": "boolean"
+                },
                 "tcp_fast_open": {
                   "type": "boolean"
                 },
@@ -13562,6 +13658,9 @@
                 },
                 "connect_timeout": {
                   "$ref": "#/$defs/Duration"
+                },
+                "tcp_concurrent": {
+                  "type": "boolean"
                 },
                 "tcp_fast_open": {
                   "type": "boolean"
@@ -13732,6 +13831,9 @@
                 "connect_timeout": {
                   "$ref": "#/$defs/Duration"
                 },
+                "tcp_concurrent": {
+                  "type": "boolean"
+                },
                 "tcp_fast_open": {
                   "type": "boolean"
                 },
@@ -13900,6 +14002,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -14088,6 +14193,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -14307,6 +14415,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -14441,6 +14552,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -14599,6 +14713,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -14874,6 +14991,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -15037,6 +15157,9 @@
             },
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
+            },
+            "tcp_concurrent": {
+              "type": "boolean"
             },
             "tcp_fast_open": {
               "type": "boolean"
@@ -16973,6 +17096,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -17875,6 +18001,9 @@
                         "connect_timeout": {
                           "$ref": "#/$defs/Duration"
                         },
+                        "tcp_concurrent": {
+                          "type": "boolean"
+                        },
                         "tcp_fast_open": {
                           "type": "boolean"
                         },
@@ -18059,6 +18188,9 @@
                           },
                           "connect_timeout": {
                             "$ref": "#/$defs/Duration"
+                          },
+                          "tcp_concurrent": {
+                            "type": "boolean"
                           },
                           "tcp_fast_open": {
                             "type": "boolean"
@@ -18758,6 +18890,9 @@
             "connect_timeout": {
               "$ref": "#/$defs/Duration"
             },
+            "tcp_concurrent": {
+              "type": "boolean"
+            },
             "tcp_fast_open": {
               "type": "boolean"
             },
@@ -19071,6 +19206,9 @@
         },
         "connect_timeout": {
           "$ref": "#/$defs/Duration"
+        },
+        "tcp_concurrent": {
+          "type": "boolean"
         },
         "tcp_fast_open": {
           "type": "boolean"

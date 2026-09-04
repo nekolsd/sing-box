@@ -96,6 +96,7 @@ type AbstractDialerOptions struct {
 	ReuseAddr                  bool                              `json:"reuse_addr,omitempty"`
 	NetNs                      string                            `json:"netns,omitempty" reference:"network_namespace"`
 	ConnectTimeout             badoption.Duration                `json:"connect_timeout,omitempty"`
+	TCPConcurrent              bool                              `json:"tcp_concurrent,omitempty"`
 	TCPFastOpen                bool                              `json:"tcp_fast_open,omitempty"`
 	TCPMultiPath               bool                              `json:"tcp_multi_path,omitempty"`
 	DisableTCPKeepAlive        bool                              `json:"disable_tcp_keep_alive,omitempty"`

@@ -42,6 +42,7 @@ icon: material/new-box
   "netns": "",
   "connect_timeout": "",
   "tcp_fast_open": false,
+  "tcp_concurrent": false,
   "tcp_multi_path": false,
   "disable_tcp_keep_alive": false,
   "tcp_keep_alive": "",
@@ -130,6 +131,12 @@ icon: material/new-box
 
 持续时间字符串是一个可能有符号的序列十进制数，每个都有可选的分数和单位后缀， 例如 "300ms"、"-1.5h" 或 "2h45m"。
 有效时间单位为 "ns"、"us"（或 "µs"）、"ms"、"s"、"m"、"h"。
+
+#### tcp_concurrent
+
+并发连接所有解析出的 TCP 地址，使用最先连接成功的地址。不能与 `detour` 同时使用。
+
+与 `tcp_fast_open` 同时启用时，多地址竞速会先完成 TCP 握手，再发送应用数据；只有一个解析地址时仍使用 TCP Fast Open。
 
 #### tcp_fast_open
 

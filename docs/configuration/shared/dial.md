@@ -42,6 +42,7 @@ icon: material/new-box
   "netns": "",
   "connect_timeout": "",
   "tcp_fast_open": false,
+  "tcp_concurrent": false,
   "tcp_multi_path": false,
   "disable_tcp_keep_alive": false,
   "tcp_keep_alive": "",
@@ -132,6 +133,12 @@ A duration string is a possibly signed sequence of
 decimal numbers, each with optional fraction and a unit suffix,
 such as "300ms", "-1.5h" or "2h45m".
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+#### tcp_concurrent
+
+Race all resolved TCP addresses and use the first successful connection. Cannot be used with `detour`.
+
+When combined with `tcp_fast_open`, racing multiple addresses completes the TCP handshake before sending application data. A single resolved address still uses TCP Fast Open.
 
 #### tcp_fast_open
 
@@ -283,4 +290,3 @@ If set, the requested domain name will be resolved to IP before connect.
 |----------|--------------------------|-------------------------------------------|
 | `direct` | Domain in request        | Take `inbound.domain_strategy` if not set | 
 | others   | Domain in server address | /                                         |
-

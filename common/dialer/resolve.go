@@ -36,6 +36,7 @@ type resolveDialer struct {
 	router        adapter.DNSRouter
 	dialer        N.Dialer
 	parallel      bool
+	tcpConcurrent bool
 	server        string
 	initOnce      sync.Once
 	initErr       error
@@ -43,7 +44,7 @@ type resolveDialer struct {
 	fallbackDelay time.Duration
 }
 
-func NewResolveDialer(ctx context.Context, dialer N.Dialer, parallel bool, server string, queryOptions adapter.DNSQueryOptions, fallbackDelay time.Duration) ResolveDialer {
+func NewResolveDialer(ctx context.Context, dialer N.Dialer, parallel bool, tcpConcurrent bool, server string, queryOptions adapter.DNSQueryOptions, fallbackDelay time.Duration) ResolveDialer {
 	if parallelDialer, isParallel := dialer.(ParallelInterfaceDialer); isParallel {
 		return &resolveParallelNetworkDialer{
 			resolveDialer{
@@ -51,6 +52,7 @@ func NewResolveDialer(ctx context.Context, dialer N.Dialer, parallel bool, serve
 				router:        service.FromContext[adapter.DNSRouter](ctx),
 				dialer:        dialer,
 				parallel:      parallel,
+				tcpConcurrent: tcpConcurrent,
 				server:        server,
 				queryOptions:  queryOptions,
 				fallbackDelay: fallbackDelay,
@@ -63,6 +65,7 @@ func NewResolveDialer(ctx context.Context, dialer N.Dialer, parallel bool, serve
 		router:        service.FromContext[adapter.DNSRouter](ctx),
 		dialer:        dialer,
 		parallel:      parallel,
+		tcpConcurrent: tcpConcurrent,
 		server:        server,
 		queryOptions:  queryOptions,
 		fallbackDelay: fallbackDelay,
@@ -104,7 +107,13 @@ func (d *resolveDialer) DialContext(ctx context.Context, network string, destina
 	if err != nil {
 		return nil, err
 	}
-	if d.parallel {
+	if d.tcpConcurrent && N.NetworkName(network) == N.NetworkTCP {
+		conn, err := DialTCPConcurrent(ctx, d.dialer, destination, addresses)
+		if conn != nil {
+			log.InfoContext(ctx, "tcp concurrent dial ", destination.Fqdn, ": winner ", conn.RemoteAddr())
+		}
+		return conn, err
+	} else if d.parallel {
 		return N.DialParallel(ctx, d.dialer, network, destination, addresses, d.queryOptions.Strategy == C.DomainStrategyPreferIPv6, d.fallbackDelay)
 	} else {
 		return N.DialSerial(ctx, d.dialer, network, destination, addresses)
@@ -145,7 +154,7 @@ func (d *resolveParallelNetworkDialer) DialParallelInterface(ctx context.Context
 		return nil, err
 	}
 	if !destination.IsDomain() {
-		return d.dialer.DialContext(ctx, network, destination)
+		return d.dialer.DialParallelInterface(ctx, network, destination, strategy, interfaceType, fallbackInterfaceType, fallbackDelay)
 	}
 	ctx = log.ContextWithOverrideLevel(ctx, log.LevelDebug)
 	addresses, err := d.router.Lookup(ctx, destination.Fqdn, d.queryOptions)
@@ -155,7 +164,15 @@ func (d *resolveParallelNetworkDialer) DialParallelInterface(ctx context.Context
 	if fallbackDelay == 0 {
 		fallbackDelay = d.fallbackDelay
 	}
-	if d.parallel {
+	if d.tcpConcurrent && N.NetworkName(network) == N.NetworkTCP {
+		conn, err := dialTCPConcurrent(ctx, func(ctx context.Context, network string, destination M.Socksaddr) (net.Conn, error) {
+			return d.dialer.DialParallelInterface(ctx, network, destination, strategy, interfaceType, fallbackInterfaceType, fallbackDelay)
+		}, destination, addresses)
+		if conn != nil {
+			log.InfoContext(ctx, "tcp concurrent dial ", destination.Fqdn, ": winner ", conn.RemoteAddr())
+		}
+		return conn, err
+	} else if d.parallel {
 		return DialParallelNetwork(ctx, d.dialer, network, destination, addresses, d.queryOptions.Strategy == C.DomainStrategyPreferIPv6, strategy, interfaceType, fallbackInterfaceType, fallbackDelay)
 	} else {
 		return DialSerialNetwork(ctx, d.dialer, network, destination, addresses, strategy, interfaceType, fallbackInterfaceType, fallbackDelay)
@@ -168,7 +185,7 @@ func (d *resolveParallelNetworkDialer) ListenSerialInterfacePacket(ctx context.C
 		return nil, err
 	}
 	if !destination.IsDomain() {
-		return d.dialer.ListenPacket(ctx, destination)
+		return d.dialer.ListenSerialInterfacePacket(ctx, destination, strategy, interfaceType, fallbackInterfaceType, fallbackDelay)
 	}
 	ctx = log.ContextWithOverrideLevel(ctx, log.LevelDebug)
 	addresses, err := d.router.Lookup(ctx, destination.Fqdn, d.queryOptions)

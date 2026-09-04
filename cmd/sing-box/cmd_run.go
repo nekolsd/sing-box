@@ -168,6 +168,7 @@ func create(options option.Options) (*box.Box, context.CancelFunc, error) {
 		cancel()
 		return nil, nil, E.Cause(err, "start service")
 	}
+	log.SetStdLogger(instance.LogFactory().Logger())
 	return instance, cancel, nil
 }
 
