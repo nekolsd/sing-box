@@ -38,6 +38,7 @@ type Selector struct {
 	connection                   adapter.ConnectionManager
 	logger                       logger.ContextLogger
 	tags                         []string
+	link                         string
 	defaultTag                   string
 	outbounds                    map[string]adapter.Outbound
 	selected                     common.TypedValue[adapter.Outbound]
@@ -65,6 +66,7 @@ func NewSelector(ctx context.Context, router adapter.Router, logger log.ContextL
 		connection:                   service.FromContext[adapter.ConnectionManager](ctx),
 		logger:                       logger,
 		tags:                         options.Outbounds,
+		link:                         urltest.ValidateLink(options.URL),
 		defaultTag:                   options.Default,
 		outbounds:                    make(map[string]adapter.Outbound),
 		history:                      service.PtrFromContext[urltest.HistoryStorage](ctx),
@@ -162,6 +164,10 @@ func (s *Selector) All() []string {
 
 func (s *Selector) References() []string {
 	return []string{s.Now()}
+}
+
+func (s *Selector) URLTestLink() string {
+	return s.link
 }
 
 func (s *Selector) Selected() adapter.Outbound {

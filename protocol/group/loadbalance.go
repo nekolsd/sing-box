@@ -92,7 +92,7 @@ func NewLoadBalance(ctx context.Context, router adapter.Router, logger log.Conte
 		connection:  service.FromContext[adapter.ConnectionManager](ctx),
 		logger:      logger,
 		tags:        options.Outbounds,
-		link:        options.URL,
+		link:        urltest.ValidateLink(options.URL),
 		interval:    time.Duration(options.Interval),
 		ttl:         time.Duration(options.TTL),
 		idleTimeout: time.Duration(options.IdleTimeout),
@@ -187,6 +187,10 @@ func (s *LoadBalance) References() []string {
 	}
 	// Any candidate may be selected, including members supplied by providers.
 	return s.All()
+}
+
+func (s *LoadBalance) URLTestLink() string {
+	return s.link
 }
 
 func (s *LoadBalance) SelectPreMatchOutbound(metadata *adapter.InboundContext, selectOutbound func(adapter.Outbound) (adapter.Outbound, adapter.PreMatchAction)) (adapter.Outbound, adapter.PreMatchAction) {
@@ -347,6 +351,7 @@ type LoadBalanceGroup struct {
 }
 
 func NewLoadBalanceGroup(ctx context.Context, outboundManager adapter.OutboundManager, logger log.Logger, outbounds []adapter.Outbound, link string, interval time.Duration, idleTimeout time.Duration, ttl time.Duration, strategy string) (*LoadBalanceGroup, error) {
+	link = urltest.ValidateLink(link)
 	if interval == 0 {
 		interval = C.DefaultURLTestInterval
 	}
@@ -362,9 +367,6 @@ func NewLoadBalanceGroup(ctx context.Context, outboundManager adapter.OutboundMa
 	history := service.PtrFromContext[urltest.HistoryStorage](ctx)
 	if history == nil {
 		return nil, E.New("missing URL test history storage")
-	}
-	if link == "" {
-		link = "https://www.gstatic.com/generate_204"
 	}
 	loadBalanceGroup := &LoadBalanceGroup{
 		ctx:            ctx,

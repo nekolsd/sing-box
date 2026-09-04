@@ -76,6 +76,35 @@ func TestURLTestDoesNotDeduplicateDifferentURLs(t *testing.T) {
 	require.EqualValues(t, 1, secondRequests.Load())
 }
 
+func TestURLTestRequestURLReachesNestedGroups(t *testing.T) {
+	var configuredRequests, overrideRequests atomic.Int32
+	configured := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		configuredRequests.Add(1)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer configured.Close()
+	override := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		overrideRequests.Add(1)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer override.Close()
+	leaf := &recursiveURLTestOutbound{tag: "leaf"}
+	manager := &recursiveURLTestOutboundManager{outbounds: map[string]adapter.Outbound{leaf.tag: leaf}}
+	history := urltest.NewHistoryStorage()
+	nested := newURLTestForRecursiveTest("nested", configured.URL, manager, history, leaf)
+	manager.outbounds[nested.Tag()] = nested
+	ctx := ContextWithURLTestLink(context.Background(), override.URL)
+	result := URLTestOutbounds(ctx, manager, history, log.NewNOPFactory().Logger(), []adapter.Outbound{nested, leaf}, configured.URL, 0, true)
+	require.Contains(t, result, leaf.tag)
+	require.EqualValues(t, 0, configuredRequests.Load())
+	require.EqualValues(t, 1, overrideRequests.Load())
+	require.Equal(t, configured.URL, nested.URLTestLink())
+	// A later ordinary request must still use the configured URL.
+	_, err := nested.URLTest(context.Background())
+	require.NoError(t, err)
+	require.EqualValues(t, 1, configuredRequests.Load())
+}
+
 func TestURLTestSelectionKeepsCurrentWithinTolerance(t *testing.T) {
 	current := &recursiveURLTestOutbound{tag: "current"}
 	candidate := &recursiveURLTestOutbound{tag: "candidate"}
@@ -171,6 +200,7 @@ func newURLTestForRecursiveTest(tag string, link string, manager adapter.Outboun
 	}
 	return &URLTest{
 		Adapter: adapterOutbound.NewAdapter(C.TypeURLTest, tag, []string{N.NetworkTCP, N.NetworkUDP}, memberTags),
+		link:    link,
 		group:   group,
 	}
 }

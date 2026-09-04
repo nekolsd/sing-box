@@ -78,7 +78,7 @@ func NewURLTest(ctx context.Context, router adapter.Router, logger log.ContextLo
 		connection:                   service.FromContext[adapter.ConnectionManager](ctx),
 		logger:                       logger,
 		tags:                         options.Outbounds,
-		link:                         options.URL,
+		link:                         urltest.ValidateLink(options.URL),
 		interval:                     time.Duration(options.Interval),
 		tolerance:                    options.Tolerance,
 		idleTimeout:                  time.Duration(options.IdleTimeout),
@@ -196,6 +196,10 @@ func (s *URLTest) References() []string {
 		references = append(references, selectedOutboundUDP.Tag())
 	}
 	return references
+}
+
+func (s *URLTest) URLTestLink() string {
+	return s.link
 }
 
 func (s *URLTest) SelectPreMatchOutbound(metadata *adapter.InboundContext, selectOutbound func(adapter.Outbound) (adapter.Outbound, adapter.PreMatchAction)) (adapter.Outbound, adapter.PreMatchAction) {
@@ -373,6 +377,7 @@ type URLTestGroup struct {
 }
 
 func NewURLTestGroup(ctx context.Context, outboundManager adapter.OutboundManager, logger log.Logger, outbounds []adapter.Outbound, link string, interval time.Duration, tolerance uint16, idleTimeout time.Duration, fallback URLTestFallback, interruptExternalConnections bool) (*URLTestGroup, error) {
+	link = urltest.ValidateLink(link)
 	if interval == 0 {
 		interval = C.DefaultURLTestInterval
 	}
@@ -594,6 +599,14 @@ type urlTestSession struct {
 
 type urlTestSessionContextKey struct{}
 
+type urlTestLinkContextKey struct{}
+
+// ContextWithURLTestLink overrides the test URL for this request, including
+// nested groups, without changing any group's configured URL.
+func ContextWithURLTestLink(ctx context.Context, link string) context.Context {
+	return context.WithValue(ctx, urlTestLinkContextKey{}, urltest.ValidateLink(link))
+}
+
 type recursiveURLTestGroup interface {
 	adapter.OutboundGroup
 	urlTest(ctx context.Context, force bool) (map[string]uint16, error)
@@ -644,6 +657,9 @@ type urlTestBatch struct {
 }
 
 func URLTestOutbounds(ctx context.Context, outboundManager adapter.OutboundManager, history *urltest.HistoryStorage, logger log.Logger, outbounds []adapter.Outbound, link string, interval time.Duration, force bool) map[string]uint16 {
+	if overrideLink, loaded := ctx.Value(urlTestLinkContextKey{}).(string); loaded {
+		link = overrideLink
+	}
 	ctx, session := urlTestSessionFromContext(ctx)
 	b, _ := batch.New(ctx, batch.WithConcurrencyNum[any](10))
 	testBatch := &urlTestBatch{

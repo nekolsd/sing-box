@@ -12468,6 +12468,9 @@
             "use_all_providers": {
               "type": "boolean"
             },
+            "url": {
+              "type": "string"
+            },
             "default": {
               "type": "string",
               "x-tag-reference": "outbound"

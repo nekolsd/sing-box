@@ -274,6 +274,10 @@ func (g *loadBalanceURLTestGroup) All() []string {
 	return g.members
 }
 
+func (g *loadBalanceURLTestGroup) URLTestLink() string {
+	return urltest.DefaultURLTestLink
+}
+
 func (g *loadBalanceURLTestGroup) URLTest(context.Context) (map[string]uint16, error) {
 	return nil, nil
 }

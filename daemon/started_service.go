@@ -733,11 +733,12 @@ func (s *StartedService) URLTest(ctx context.Context, request *URLTestRequest) (
 	} else if isLoadBalance {
 		go loadBalance.URLTest(boxService.ctx)
 	} else if isOutboundGroup {
+		link := outboundGroup.URLTestLink()
 		outbounds := common.FilterNotNil(common.Map(outboundGroup.All(), func(it string) adapter.Outbound {
 			itOutbound, _ := boxService.outboundManager.Outbound(it)
 			return itOutbound
 		}))
-		go group.URLTestOutbounds(boxService.ctx, boxService.outboundManager, historyStorage, boxService.logFactory.Logger(), outbounds, "", 0, true)
+		go group.URLTestOutbounds(boxService.ctx, boxService.outboundManager, historyStorage, boxService.logFactory.Logger(), outbounds, link, 0, true)
 	} else {
 		go func() {
 			t, err := urltest.URLTest(boxService.ctx, "", outbound)

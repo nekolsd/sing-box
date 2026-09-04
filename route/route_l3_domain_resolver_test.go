@@ -231,6 +231,10 @@ func (g *testOutboundGroup) All() []string {
 	return []string{g.now}
 }
 
+func (g *testOutboundGroup) URLTestLink() string {
+	return ""
+}
+
 func (g *testOutboundGroup) SelectPreMatchOutbound(_ *adapter.InboundContext, selectOutbound func(adapter.Outbound) (adapter.Outbound, adapter.PreMatchAction)) (adapter.Outbound, adapter.PreMatchAction) {
 	return selectOutbound(g.selected)
 }

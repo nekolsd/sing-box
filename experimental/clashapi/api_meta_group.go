@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/sagernet/sing-box/adapter"
+	"github.com/sagernet/sing-box/common/urltest"
 	"github.com/sagernet/sing-box/protocol/group"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/json/badjson"
@@ -65,9 +65,6 @@ func getGroupDelay(server *Server) func(w http.ResponseWriter, r *http.Request) 
 
 		query := r.URL.Query()
 		url := query.Get("url")
-		if strings.HasPrefix(url, "http://") {
-			url = ""
-		}
 		timeout, err := strconv.ParseInt(query.Get("timeout"), 10, 32)
 		if err != nil {
 			render.Status(r, http.StatusBadRequest)
@@ -78,12 +75,23 @@ func getGroupDelay(server *Server) func(w http.ResponseWriter, r *http.Request) 
 		ctx, cancel := context.WithTimeout(r.Context(), time.Millisecond*time.Duration(timeout))
 		defer cancel()
 
+		if url != "" && urltest.ValidateLink(url) != url {
+			url = ""
+		}
+		if url != "" {
+			ctx = group.ContextWithURLTestLink(ctx, url)
+		}
+
 		var result map[string]uint16
-		if urlTestGroup, isURLTestGroup := outboundGroup.(adapter.URLTestGroup); isURLTestGroup {
-			result, err = urlTestGroup.URLTest(ctx)
-		} else if loadBalanceGroup, isLoadBalanceGroup := outboundGroup.(adapter.LoadBalanceGroup); isLoadBalanceGroup {
-			result, err = loadBalanceGroup.URLTest(ctx)
-		} else {
+		switch testGroup := outboundGroup.(type) {
+		case adapter.URLTestGroup:
+			result, err = testGroup.URLTest(ctx)
+		case adapter.LoadBalanceGroup:
+			result, err = testGroup.URLTest(ctx)
+		default:
+			if url == "" {
+				url = outboundGroup.URLTestLink()
+			}
 			outbounds := common.FilterNotNil(common.Map(outboundGroup.All(), func(it string) adapter.Outbound {
 				itOutbound, _ := server.outbound.Outbound(it)
 				return itOutbound
