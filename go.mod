@@ -84,6 +84,8 @@ require (
 
 replace github.com/sagernet/sing-tun => github.com/nekolsd/sing-tun v0.9.3-nekolsd-2
 
+replace github.com/sagernet/sing-anytls => github.com/reF1nd/sing-anytls v0.0.0-20260905062301-7eeaaeb4fb19
+
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	filippo.io/hpke v0.4.0 // indirect
