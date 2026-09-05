@@ -1,7 +1,6 @@
 package route
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -22,9 +21,7 @@ func TestInterfaceUpdateStartupBoundary(t *testing.T) {
 			name = "notification_after_startup"
 		}
 		t.Run(name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			ctx = pause.WithDefaultManager(ctx)
+			ctx := pause.WithDefaultManager(t.Context())
 			updateLogger := &startupUpdateLogger{
 				ContextLogger: log.NewNOPFactory().NewLogger("network"),
 				processing:    make(chan struct{}, 1),

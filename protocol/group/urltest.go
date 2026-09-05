@@ -5,6 +5,7 @@ import (
 	"maps"
 	"net"
 	"regexp"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -808,13 +809,5 @@ func (g *URLTestGroup) replaceOutbounds(outbounds []adapter.Outbound) {
 }
 
 func containsOutbound(outbounds []adapter.Outbound, selected adapter.Outbound) bool {
-	if selected == nil {
-		return true
-	}
-	for _, outbound := range outbounds {
-		if outbound == selected {
-			return true
-		}
-	}
-	return false
+	return selected == nil || slices.Contains(outbounds, selected)
 }

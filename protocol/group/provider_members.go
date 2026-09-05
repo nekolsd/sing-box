@@ -1,6 +1,7 @@
 package group
 
 import (
+	"maps"
 	"regexp"
 	"sync"
 
@@ -54,9 +55,7 @@ func collectProviderOutbounds(
 		return nil, nil, nil, E.New("outbound provider not found: ", updatedTag)
 	}
 	newCache := make(map[string][]adapter.Outbound, len(outboundsCache))
-	for providerTag, cachedOutbounds := range outboundsCache {
-		newCache[providerTag] = cachedOutbounds
-	}
+	maps.Copy(newCache, outboundsCache)
 	var (
 		tags      = make([]string, 0, len(directTags))
 		outbounds = make([]adapter.Outbound, 0, len(directTags))

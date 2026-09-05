@@ -145,10 +145,7 @@ func runConcurrentProviderUpdates(t *testing.T, update func(string) error, read 
 	errors := make(chan error, 2)
 	var group sync.WaitGroup
 	for _, providerTag := range []string{"first", "second"} {
-		providerTag := providerTag
-		group.Add(1)
-		go func() {
-			defer group.Done()
+		group.Go(func() {
 			<-start
 			for range 100 {
 				if err := update(providerTag); err != nil {
@@ -156,16 +153,14 @@ func runConcurrentProviderUpdates(t *testing.T, update func(string) error, read 
 					return
 				}
 			}
-		}()
+		})
 	}
-	group.Add(1)
-	go func() {
-		defer group.Done()
+	group.Go(func() {
 		<-start
 		for range 200 {
 			read()
 		}
-	}()
+	})
 	close(start)
 	group.Wait()
 	close(errors)
