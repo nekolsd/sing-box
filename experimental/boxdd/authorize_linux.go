@@ -21,8 +21,8 @@ const (
 	policyKitService               = "org.freedesktop.PolicyKit1"
 	policyKitAuthorityPath         = dbus.ObjectPath("/org/freedesktop/PolicyKit1/Authority")
 	policyKitAuthorityInterface    = "org.freedesktop.PolicyKit1.Authority"
-	policyKitTakeOverAction        = "io.reF1nd.sfl.take-over-service"
-	policyKitSetInsecureModeAction = "io.reF1nd.sfl.set-insecure-mode"
+	policyKitTakeOverAction        = "io.nekolsd.sfl.take-over-service"
+	policyKitSetInsecureModeAction = "io.nekolsd.sfl.set-insecure-mode"
 	policyKitAllowUserInteraction  = uint32(1)
 )
 

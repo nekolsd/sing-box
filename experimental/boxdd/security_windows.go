@@ -42,7 +42,7 @@ func secureWindowsInstallation(executablePath string, allowUnsafeInstallation bo
 	}
 	applicationExecutable, err := openLockedExecutable(applicationPath)
 	if err != nil {
-		return "", E.Cause(err, "open installed application")
+		return "", E.Cause(err, "open installed application ", applicationPath)
 	}
 	defer windows.CloseHandle(applicationExecutable)
 	daemonSigner, err := authenticodeSigner(daemonPath, daemonExecutable)

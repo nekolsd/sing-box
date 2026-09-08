@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultServiceWorkingDirectory = "/var/lib/sing-box-daemon-reF1nd"
+	defaultServiceWorkingDirectory = "/var/lib/sing-box-daemon-nekolsd"
 	serviceUnitName                = serviceName + ".service"
 )
 
