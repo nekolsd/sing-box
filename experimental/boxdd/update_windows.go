@@ -11,7 +11,6 @@ import (
 
 	"github.com/sagernet/sing-box/common/badversion"
 	C "github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-box/experimental/libbox"
 	E "github.com/sagernet/sing/common/exceptions"
 
 	"github.com/tailscale/go-winio"
@@ -80,7 +79,7 @@ func (d *Daemon) installUpdate(identity peerIdentity, installerPath string) (*In
 	if !badversion.IsValid(installerIdentity.version) {
 		return nil, status.Error(codes.InvalidArgument, "update installer has an invalid version")
 	}
-	if !libbox.CompareSemver(installerIdentity.version, C.Version) {
+	if installerIdentity.version == C.Version {
 		return &InstallUpdateResponse{Result: InstallUpdateResult_INSTALL_UPDATE_RESULT_NOT_NEWER}, nil
 	}
 	installerProcess, err := launchUpdateInstaller(installerFinalPath, identity.SessionID)
